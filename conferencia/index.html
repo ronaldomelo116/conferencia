@@ -12,8 +12,9 @@
             margin: 0;
             padding: 20px;
         }
+        /* Aumentei a largura para caberem todas as colunas com conforto */
         .container {
-            max-width: 900px;
+            max-width: 1400px;
             margin: 0 auto;
             background-color: #202124;
             padding: 30px;
@@ -78,7 +79,6 @@
             color: #9aa0a6;
             cursor: not-allowed;
         }
-
         .search-bar {
             width: 100%;
             padding: 15px;
@@ -107,38 +107,64 @@
             text-align: center;
             border: 2px solid #c5221f;
         }
+
+        /* ----- NOVO ESTILO DA TABELA (CABEÇALHO E LINHAS) ----- */
+        .tabela-container {
+            background-color: #303134;
+            border-radius: 8px;
+            border: 1px solid #5f6368;
+            overflow: hidden;
+        }
+        .list-header {
+            display: flex;
+            background-color: #171717;
+            padding: 15px;
+            border-bottom: 2px solid #5f6368;
+            font-size: 12px;
+            font-weight: bold;
+            color: #9aa0a6;
+            text-transform: uppercase;
+        }
         ul {
             list-style: none;
             padding: 0;
             margin: 0;
-            background-color: #303134;
-            border-radius: 8px;
-            border: 1px solid #5f6368;
             max-height: 600px;
             overflow-y: auto;
         }
         li {
-            padding: 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid #5f6368;
             font-size: 14px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             transition: all 0.2s ease;
-            line-height: 1.5;
         }
         li:last-child {
             border-bottom: none;
         }
-        .item-info {
+        /* Grid inteligente para organizar as colunas de forma alinhada */
+        .grid-row {
             flex: 1;
+            display: grid;
+            /* Proporções exatas baseadas na sua imagem */
+            grid-template-columns: 0.8fr 0.8fr 4fr 1.5fr 1.5fr 1fr 0.5fr 1fr;
+            gap: 15px;
+            align-items: center;
             padding-right: 15px;
-            word-break: break-word;
         }
-        .item-info strong {
+        .col-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Destaque do Número de Série */
+        .col-ns {
             color: #8ab4f8;
-            font-size: 16px;
+            font-weight: bold;
         }
+
+        /* Efeitos visuais do Ctrl+F */
         .destaque-busca {
             background-color: #444746 !important;
             border-left: 8px solid #fbbc04;
@@ -148,16 +174,22 @@
             color: #fff;
             border-left: 8px solid #137333;
         }
-        .verificado .item-info strong {
-            color: #fff;
+        .verificado .col-text, .verificado .col-ns {
+            color: #fff !important;
+        }
+        
+        .status-container {
+            width: 80px;
+            text-align: right;
         }
         .status-badge {
-            font-size: 14px;
+            font-size: 13px;
             padding: 6px 10px;
             border-radius: 4px;
             background-color: #5f6368;
             font-weight: bold;
             white-space: nowrap;
+            display: inline-block;
         }
         .verificado .status-badge {
             background-color: #ceead6;
@@ -176,7 +208,7 @@
     </h2>
     
     <div class="upload-section">
-        <label for="txtFile">1. Envie o arquivo da tabela (.txt ou .csv):</label>
+        <label for="txtFile">1. Envie o arquivo (.txt ou .csv):</label>
         <div class="upload-controls">
             <input type="file" id="txtFile" accept=".txt, .csv">
             <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
@@ -187,9 +219,27 @@
 
     <div id="alert-box">❌ ALERTA: Equipamento não encontrado na lista!</div>
 
-    <ul id="nsList">
-        <li style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui.</li>
-    </ul>
+    <div class="tabela-container">
+        <div class="list-header" id="listHeader" style="display: none;">
+            <div class="grid-row">
+                <div>Código</div>
+                <div>Data</div>
+                <div>Nome</div>
+                <div>Número de Série</div>
+                <div>NS Interno</div>
+                <div>Estado</div>
+                <div>Qtd</div>
+                <div>Funcionário</div>
+            </div>
+            <div class="status-container">Status</div>
+        </div>
+
+        <ul id="nsList">
+            <li id="mensagemVazia" style="color: #9aa0a6; text-align: center; justify-content: center;">
+                Os itens da transação aparecerão aqui organizados em colunas.
+            </li>
+        </ul>
+    </div>
 </div>
 
 <script>
@@ -197,6 +247,7 @@
     const btnLimpar = document.getElementById('btnLimpar');
     const searchBar = document.getElementById('searchBar');
     const nsList = document.getElementById('nsList');
+    const listHeader = document.getElementById('listHeader');
     const alertBox = document.getElementById('alert-box');
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
@@ -206,8 +257,10 @@
     let typingTimer;
     const tempoDeEspera = 150; 
 
+    // ---- FUNÇÃO PARA LIMPAR TUDO ----
     btnLimpar.addEventListener('click', function() {
-        nsList.innerHTML = '<li style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui.</li>';
+        nsList.innerHTML = '<li id="mensagemVazia" style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui organizados em colunas.</li>';
+        listHeader.style.display = 'none'; // Esconde o cabeçalho
         
         totalItens = 0;
         itensBipados = 0;
@@ -216,13 +269,12 @@
         spanBipados.style.color = '#8ab4f8'; 
         
         fileInput.value = '';
-        
         searchBar.value = '';
         searchBar.disabled = true;
-        
         btnLimpar.disabled = true;
     });
 
+    // ---- FUNÇÃO DE UPLOAD ----
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -230,16 +282,25 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const content = e.target.result;
-            const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
-            renderList(lines);
+            // Filtra as linhas vazias
+            let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
             
+            // Remove a primeira linha se ela for o cabeçalho (para não duplicar)
+            if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
+                linhas.shift();
+            }
+
+            renderList(linhas);
             btnLimpar.disabled = false;
         };
         reader.readAsText(file);
     });
 
+    // ---- FUNÇÃO DE RENDERIZAR TABELA ----
     function renderList(linhas) {
         nsList.innerHTML = ''; 
+        listHeader.style.display = 'flex'; // Mostra o cabeçalho
+        
         totalItens = linhas.length;
         itensBipados = 0;
         spanTotal.textContent = totalItens;
@@ -248,17 +309,41 @@
 
         linhas.forEach(linha => {
             const textoOriginal = linha.trim();
+            // Limpa aspas do CSV
+            let limpo = textoOriginal.replace(/"/g, ''); 
             
-            // NOVIDADE AQUI: Limpa aspas duplas (comuns em CSV) e troca Tab, Ponto-e-vírgula e Vírgula por barras visuais
-            let textoFormatado = textoOriginal.replace(/"/g, ''); 
-            textoFormatado = textoFormatado.replace(/[\t;,]/g, ' <strong>|</strong> ');
+            // Descobre qual é o separador do arquivo (Tab, Ponto e vírgula, ou Vírgula)
+            let separador = '\t';
+            if (limpo.includes('\t')) separador = '\t';
+            else if (limpo.includes(';')) separador = ';';
+            else if (limpo.includes(',')) separador = ',';
+
+            // Quebra a linha nas colunas
+            let colunas = limpo.split(separador);
+
+            // Monta o HTML das colunas dentro do grid (Até 8 colunas)
+            let colsHTML = '';
+            for(let i = 0; i < 8; i++) {
+                let valor = colunas[i] ? colunas[i].trim() : '-';
+                
+                // Destaca a coluna 3 (Número de Série) em azul
+                if(i === 3) {
+                    colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
+                } else {
+                    colsHTML += `<div class="col-text" title="${valor}">${valor}</div>`;
+                }
+            }
 
             const li = document.createElement('li');
             li.dataset.linhaRaw = textoOriginal.toUpperCase(); 
             
             li.innerHTML = `
-                <div class="item-info">${textoFormatado}</div>
-                <div class="status-badge">Pendente</div>
+                <div class="grid-row">
+                    ${colsHTML}
+                </div>
+                <div class="status-container">
+                    <span class="status-badge">Pendente</span>
+                </div>
             `;
             nsList.appendChild(li);
         });
@@ -267,6 +352,7 @@
         searchBar.focus();
     }
 
+    // ---- LÓGICA DE BUSCA (BIPADOR) ----
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
