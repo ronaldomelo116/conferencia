@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferência de Estoque</title>
+    <style>
+        body {
+            background-color: #F37021; 
+            color: #e8eaed;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #202124;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        h2 {
+            color: #fff;
+            border-bottom: 1px solid #5f6368;
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .painel-contagem {
+            background-color: #303134;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 20px;
+            border: 2px solid #8ab4f8;
+            color: #fff;
+        }
+        .painel-contagem span {
+            color: #8ab4f8;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        .upload-section {
+            background-color: #303134;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #5f6368;
+        }
+        .upload-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        input[type="file"] {
+            color: #8ab4f8;
+            font-size: 16px;
+        }
+        .btn-limpar {
+            background-color: #c5221f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-limpar:hover {
+            background-color: #a51b19;
+        }
+        .btn-limpar:disabled {
+            background-color: #5f6368;
+            color: #9aa0a6;
+            cursor: not-allowed;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            background-color: #171717;
+            border: 2px solid #8ab4f8;
+            color: #fff;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        .search-bar:focus {
+            border-color: #aecbfa;
+            box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
+        }
+        #alert-box {
+            display: none;
+            background-color: #fce8e6;
+            color: #c5221f;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #c5221f;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #303134;
+            border-radius: 8px;
+            border: 1px solid #5f6368;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        li {
+            padding: 15px;
+            border-bottom: 1px solid #5f6368;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        .item-info {
+            flex: 1;
+            padding-right: 15px;
+            word-break: break-word;
+        }
+        .item-info strong {
+            color: #8ab4f8;
+            font-size: 16px;
+        }
+        .destaque-busca {
+            background-color: #444746 !important;
+            border-left: 8px solid #fbbc04;
+        }
+        .verificado {
+            background-color: #137333 !important;
+            color: #fff;
+            border-left: 8px solid #137333;
+        }
+        .verificado .item-info strong {
+            color: #fff;
+        }
+        .status-badge {
+            font-size: 14px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background-color: #5f6368;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .verificado .status-badge {
+            background-color: #ceead6;
+            color: #137333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>
+        Conferência de Transação
+        <div class="painel-contagem">
+            Bipados: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
+        </div>
+    </h2>
+    
+    <div class="upload-section">
+        <label for="txtFile">1. Envie o arquivo da tabela (.txt ou .csv):</label>
+        <div class="upload-controls">
+            <input type="file" id="txtFile" accept=".txt, .csv">
+            <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
+        </div>
+    </div>
+
+    <input type="text" id="searchBar" class="search-bar" placeholder="Bipe ou digite os últimos números..." disabled autocomplete="off">
+
+    <div id="alert-box">❌ ALERTA: Equipamento não encontrado na lista!</div>
+
+    <ul id="nsList">
+        <li style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui.</li>
+    </ul>
+</div>
+
+<script>
+    const fileInput = document.getElementById('txtFile');
+    const btnLimpar = document.getElementById('btnLimpar');
+    const searchBar = document.getElementById('searchBar');
+    const nsList = document.getElementById('nsList');
+    const alertBox = document.getElementById('alert-box');
+    const spanBipados = document.getElementById('qtdBipados');
+    const spanTotal = document.getElementById('qtdTotal');
+
+    let totalItens = 0;
+    let itensBipados = 0;
+    let typingTimer;
+    const tempoDeEspera = 150; 
+
+    btnLimpar.addEventListener('click', function() {
+        nsList.innerHTML = '<li style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui.</li>';
+        
+        totalItens = 0;
+        itensBipados = 0;
+        spanTotal.textContent = totalItens;
+        spanBipados.textContent = itensBipados;
+        spanBipados.style.color = '#8ab4f8'; 
+        
+        fileInput.value = '';
+        
+        searchBar.value = '';
+        searchBar.disabled = true;
+        
+        btnLimpar.disabled = true;
+    });
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+            renderList(lines);
+            
+            btnLimpar.disabled = false;
+        };
+        reader.readAsText(file);
+    });
+
+    function renderList(linhas) {
+        nsList.innerHTML = ''; 
+        totalItens = linhas.length;
+        itensBipados = 0;
+        spanTotal.textContent = totalItens;
+        spanBipados.textContent = itensBipados;
+        spanBipados.style.color = '#8ab4f8'; 
+
+        linhas.forEach(linha => {
+            const textoOriginal = linha.trim();
+            
+            // NOVIDADE AQUI: Limpa aspas duplas (comuns em CSV) e troca Tab, Ponto-e-vírgula e Vírgula por barras visuais
+            let textoFormatado = textoOriginal.replace(/"/g, ''); 
+            textoFormatado = textoFormatado.replace(/[\t;,]/g, ' <strong>|</strong> ');
+
+            const li = document.createElement('li');
+            li.dataset.linhaRaw = textoOriginal.toUpperCase(); 
+            
+            li.innerHTML = `
+                <div class="item-info">${textoFormatado}</div>
+                <div class="status-badge">Pendente</div>
+            `;
+            nsList.appendChild(li);
+        });
+
+        searchBar.disabled = false;
+        searchBar.focus();
+    }
+
+    searchBar.addEventListener('input', function() {
+        clearTimeout(typingTimer); 
+        const termo = this.value.trim().toUpperCase();
+        const items = nsList.querySelectorAll('li');
+        
+        items.forEach(li => li.classList.remove('destaque-busca'));
+
+        if (!termo) return;
+
+        let matches = [];
+
+        items.forEach(li => {
+            if (!li.classList.contains('verificado') && li.dataset.linhaRaw.includes(termo)) {
+                matches.push(li);
+                li.classList.add('destaque-busca'); 
+            }
+        });
+
+        if (matches.length > 0) {
+            matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        typingTimer = setTimeout(() => {
+            if (matches.length === 1 && termo.length >= 4) {
+                confirmarItem(matches[0]);
+            } 
+            else if (matches.length === 0 && termo.length > 5) {
+                dispararErro();
+            }
+        }, tempoDeEspera);
+    });
+
+    searchBar.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(typingTimer);
+            const termo = this.value.trim().toUpperCase();
+            if (!termo) return;
+
+            const items = nsList.querySelectorAll('li');
+            let matchEncontrado = null;
+
+            items.forEach(li => {
+                if (!li.classList.contains('verificado') && li.dataset.linhaRaw.includes(termo)) {
+                    if (!matchEncontrado) matchEncontrado = li; 
+                }
+            });
+
+            if (matchEncontrado) confirmarItem(matchEncontrado);
+            else dispararErro();
+        }
+    });
+
+    function confirmarItem(li) {
+        li.classList.remove('destaque-busca');
+        li.classList.add('verificado');
+        li.querySelector('.status-badge').textContent = 'OK';
+        
+        itensBipados++;
+        spanBipados.textContent = itensBipados;
+        
+        if (itensBipados === totalItens) {
+            spanBipados.style.color = '#137333';
+        }
+        
+        searchBar.value = '';
+        searchBar.focus();
+    }
+
+    function dispararErro() {
+        alertBox.style.display = 'block';
+        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
+        audio.play().catch(() => {}); 
+        
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 3000);
+        
+        searchBar.value = '';
+        searchBar.focus();
+    }
+</script>
+
+</body>
+</html>
