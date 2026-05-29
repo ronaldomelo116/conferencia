@@ -39,16 +39,15 @@
             justify-content: space-between;
             align-items: center;
         }
-        /* --- NOVO ESTILO PARA A LOGO E TÍTULO --- */
         .header-title {
             display: flex;
             align-items: center;
-            gap: 15px; /* Espaço entre a logo e o texto */
+            gap: 15px; 
         }
         .logo-img {
-            height: 50px; /* Altura da logo. Pode aumentar ou diminuir se precisar */
+            height: 50px; 
             width: auto;
-            border-radius: 8px; /* Deixa as bordas levemente arredondadas, opcional */
+            border-radius: 8px; 
         }
         
         .painel-contagem {
@@ -352,7 +351,28 @@
     let itensBipados = 0;
     let typingTimer;
     const tempoDeEspera = 150; 
+    
+    // NOVO: Array que vai guardar os dados para não perder na atualização da página
+    let estoqueDados = []; 
 
+    // --- CARREGAMENTO INICIAL AO ABRIR A PÁGINA ---
+    window.onload = function() {
+        const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
+        if (dadosSalvos) {
+            estoqueDados = JSON.parse(dadosSalvos);
+            if (estoqueDados.length > 0) {
+                renderizarDaMemoria();
+                btnLimpar.disabled = false;
+            }
+        }
+    };
+
+    // --- FUNÇÃO PARA SALVAR O ESTADO ATUAL NO NAVEGADOR ---
+    function salvarNaMemoria() {
+        localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
+    }
+
+    // --- BOTÃO DE LIMPAR (Agora apaga do navegador também) ---
     btnLimpar.addEventListener('click', function() {
         nsList.innerHTML = '<li id="mensagemVazia" style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui organizados em colunas.</li>';
         listHeader.style.display = 'none'; 
@@ -371,8 +391,13 @@
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
         infoFiltro.style.display = 'none';
+        
+        // Zera o array e apaga do LocalStorage
+        estoqueDados = [];
+        localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
+    // --- LEITURA DO ARQUIVO UPLOAD ---
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -386,25 +411,37 @@
                 linhas.shift();
             }
 
-            renderList(linhas);
+            // Transforma as linhas cruas em objetos e salva no Array
+            estoqueDados = linhas.map(linha => {
+                return {
+                    linhaOriginal: linha.trim(),
+                    linhaUpper: linha.trim().toUpperCase(),
+                    verificado: false
+                };
+            });
+
+            salvarNaMemoria(); // Salva no navegador
+            renderizarDaMemoria(); // Desenha na tela
             btnLimpar.disabled = false;
         };
         reader.readAsText(file);
     });
 
-    function renderList(linhas) {
+    // --- RENDERIZAR LISTA COM BASE NOS DADOS SALVOS ---
+    function renderizarDaMemoria() {
         nsList.innerHTML = ''; 
         listHeader.style.display = 'flex'; 
         
-        totalItens = linhas.length;
-        itensBipados = 0;
+        totalItens = estoqueDados.length;
+        // Conta quantos itens já estão verificados no cache salvo
+        itensBipados = estoqueDados.filter(item => item.verificado).length; 
+        
         spanTotal.textContent = totalItens;
         spanBipados.textContent = itensBipados;
-        spanBipados.style.color = '#8ab4f8'; 
+        spanBipados.style.color = (itensBipados === totalItens && totalItens > 0) ? '#137333' : '#8ab4f8'; 
 
-        linhas.forEach(linha => {
-            const textoOriginal = linha.trim();
-            let limpo = textoOriginal.replace(/"/g, ''); 
+        estoqueDados.forEach((item, index) => {
+            let limpo = item.linhaOriginal.replace(/"/g, ''); 
             
             let separador = '\t';
             if (limpo.includes('\t')) separador = '\t';
@@ -424,16 +461,26 @@
             }
 
             const li = document.createElement('li');
-            li.dataset.linhaRaw = textoOriginal.toUpperCase(); 
+            li.dataset.index = index; // Guarda o ID único do item
+            li.dataset.linhaRaw = item.linhaUpper; 
             
-            li.innerHTML = `
-                <div class="grid-row">
-                    ${colsHTML}
-                </div>
-                <div class="status-container">
-                    <span class="status-badge">Pendente</span>
-                </div>
-            `;
+            // Verifica se no cache ele já estava como "OK"
+            if (item.verificado) {
+                li.classList.add('verificado');
+                li.innerHTML = `
+                    <div class="grid-row">${colsHTML}</div>
+                    <div class="status-container">
+                        <span class="status-badge">OK</span>
+                    </div>
+                `;
+            } else {
+                li.innerHTML = `
+                    <div class="grid-row">${colsHTML}</div>
+                    <div class="status-container">
+                        <span class="status-badge">Pendente</span>
+                    </div>
+                `;
+            }
             nsList.appendChild(li);
         });
 
@@ -441,6 +488,7 @@
         searchBar.focus();
     }
 
+    // --- BUSCA, FILTRO E AUTOBIPAGEM ---
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
@@ -529,11 +577,17 @@
         }
     });
 
+    // --- FUNÇÕES DE AÇÃO ---
     function confirmarItem(li) {
         li.classList.remove('destaque-busca');
         li.classList.add('verificado');
         li.querySelector('.status-badge').textContent = 'OK';
         
+        // --- NOVO: ATUALIZA O CACHE DE DADOS E SALVA ---
+        const indexDoItem = li.dataset.index;
+        estoqueDados[indexDoItem].verificado = true;
+        salvarNaMemoria();
+
         itensBipados++;
         spanBipados.textContent = itensBipados;
         
