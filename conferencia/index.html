@@ -12,7 +12,6 @@
             margin: 0;
             padding: 20px;
         }
-        /* Aumentei a largura para caberem todas as colunas com conforto */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -95,6 +94,8 @@
             border-color: #aecbfa;
             box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
         }
+        
+        /* Caixas de Alerta */
         #alert-box {
             display: none;
             background-color: #fce8e6;
@@ -107,8 +108,20 @@
             text-align: center;
             border: 2px solid #c5221f;
         }
+        /* Novo Alerta Amarelo para Item Duplicado */
+        #alert-warning {
+            display: none;
+            background-color: #fef7e0;
+            color: #b06000;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #fbbc04;
+        }
 
-        /* ----- NOVO ESTILO DA TABELA (CABEÇALHO E LINHAS) ----- */
         .tabela-container {
             background-color: #303134;
             border-radius: 8px;
@@ -143,11 +156,9 @@
         li:last-child {
             border-bottom: none;
         }
-        /* Grid inteligente para organizar as colunas de forma alinhada */
         .grid-row {
             flex: 1;
             display: grid;
-            /* Proporções exatas baseadas na sua imagem */
             grid-template-columns: 0.8fr 0.8fr 4fr 1.5fr 1.5fr 1fr 0.5fr 1fr;
             gap: 15px;
             align-items: center;
@@ -158,13 +169,11 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        /* Destaque do Número de Série */
         .col-ns {
             color: #8ab4f8;
             font-weight: bold;
         }
 
-        /* Efeitos visuais do Ctrl+F */
         .destaque-busca {
             background-color: #444746 !important;
             border-left: 8px solid #fbbc04;
@@ -178,6 +187,16 @@
             color: #fff !important;
         }
         
+        /* NOVO: Animação de Piscar Amarelo para Item Já Verificado */
+        @keyframes piscarAmarelo {
+            0% { background-color: #137333; border-left-color: #137333; }
+            50% { background-color: #b06000; border-left-color: #fbbc04; }
+            100% { background-color: #137333; border-left-color: #137333; }
+        }
+        .piscar-aviso {
+            animation: piscarAmarelo 0.8s infinite !important;
+        }
+
         .status-container {
             width: 80px;
             text-align: right;
@@ -218,6 +237,7 @@
     <input type="text" id="searchBar" class="search-bar" placeholder="Bipe ou digite os últimos números..." disabled autocomplete="off">
 
     <div id="alert-box">❌ ALERTA: Equipamento não encontrado na lista!</div>
+    <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi bipado).</div>
 
     <div class="tabela-container">
         <div class="list-header" id="listHeader" style="display: none;">
@@ -249,6 +269,7 @@
     const nsList = document.getElementById('nsList');
     const listHeader = document.getElementById('listHeader');
     const alertBox = document.getElementById('alert-box');
+    const alertWarning = document.getElementById('alert-warning');
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
 
@@ -257,10 +278,9 @@
     let typingTimer;
     const tempoDeEspera = 150; 
 
-    // ---- FUNÇÃO PARA LIMPAR TUDO ----
     btnLimpar.addEventListener('click', function() {
         nsList.innerHTML = '<li id="mensagemVazia" style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui organizados em colunas.</li>';
-        listHeader.style.display = 'none'; // Esconde o cabeçalho
+        listHeader.style.display = 'none'; 
         
         totalItens = 0;
         itensBipados = 0;
@@ -272,9 +292,10 @@
         searchBar.value = '';
         searchBar.disabled = true;
         btnLimpar.disabled = true;
+        alertBox.style.display = 'none';
+        alertWarning.style.display = 'none';
     });
 
-    // ---- FUNÇÃO DE UPLOAD ----
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -282,10 +303,8 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const content = e.target.result;
-            // Filtra as linhas vazias
             let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
             
-            // Remove a primeira linha se ela for o cabeçalho (para não duplicar)
             if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
                 linhas.shift();
             }
@@ -296,10 +315,9 @@
         reader.readAsText(file);
     });
 
-    // ---- FUNÇÃO DE RENDERIZAR TABELA ----
     function renderList(linhas) {
         nsList.innerHTML = ''; 
-        listHeader.style.display = 'flex'; // Mostra o cabeçalho
+        listHeader.style.display = 'flex'; 
         
         totalItens = linhas.length;
         itensBipados = 0;
@@ -309,24 +327,19 @@
 
         linhas.forEach(linha => {
             const textoOriginal = linha.trim();
-            // Limpa aspas do CSV
             let limpo = textoOriginal.replace(/"/g, ''); 
             
-            // Descobre qual é o separador do arquivo (Tab, Ponto e vírgula, ou Vírgula)
             let separador = '\t';
             if (limpo.includes('\t')) separador = '\t';
             else if (limpo.includes(';')) separador = ';';
             else if (limpo.includes(',')) separador = ',';
 
-            // Quebra a linha nas colunas
             let colunas = limpo.split(separador);
 
-            // Monta o HTML das colunas dentro do grid (Até 8 colunas)
             let colsHTML = '';
             for(let i = 0; i < 8; i++) {
                 let valor = colunas[i] ? colunas[i].trim() : '-';
                 
-                // Destaca a coluna 3 (Número de Série) em azul
                 if(i === 3) {
                     colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
                 } else {
@@ -352,34 +365,55 @@
         searchBar.focus();
     }
 
-    // ---- LÓGICA DE BUSCA (BIPADOR) ----
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
         const items = nsList.querySelectorAll('li');
         
-        items.forEach(li => li.classList.remove('destaque-busca'));
+        // Remove os efeitos visuais anteriores assim que o usuário digita/apaga algo
+        items.forEach(li => {
+            li.classList.remove('destaque-busca');
+            li.classList.remove('piscar-aviso');
+        });
+
+        // Esconde as caixas de erro e aviso
+        alertBox.style.display = 'none';
+        alertWarning.style.display = 'none';
 
         if (!termo) return;
 
-        let matches = [];
+        let pendentes = [];
+        let jaVerificados = [];
 
         items.forEach(li => {
-            if (!li.classList.contains('verificado') && li.dataset.linhaRaw.includes(termo)) {
-                matches.push(li);
-                li.classList.add('destaque-busca'); 
+            if (li.dataset.linhaRaw.includes(termo)) {
+                if (!li.classList.contains('verificado')) {
+                    pendentes.push(li);
+                    li.classList.add('destaque-busca'); 
+                } else {
+                    jaVerificados.push(li);
+                }
             }
         });
 
-        if (matches.length > 0) {
-            matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Rola a tela para o item correspondente
+        if (pendentes.length > 0) {
+            pendentes[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (jaVerificados.length > 0) {
+            jaVerificados[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         typingTimer = setTimeout(() => {
-            if (matches.length === 1 && termo.length >= 4) {
-                confirmarItem(matches[0]);
+            // Se achou um item pendente
+            if (pendentes.length === 1 && termo.length >= 4) {
+                confirmarItem(pendentes[0]);
             } 
-            else if (matches.length === 0 && termo.length > 5) {
+            // Se NÃO achou pendentes, mas achou UM que já foi verificado
+            else if (pendentes.length === 0 && jaVerificados.length === 1 && termo.length >= 4) {
+                dispararAvisoVerificado(jaVerificados[0]);
+            }
+            // Se o leitor parou e não achou nada em lugar nenhum
+            else if (pendentes.length === 0 && jaVerificados.length === 0 && termo.length > 5) {
                 dispararErro();
             }
         }, tempoDeEspera);
@@ -393,15 +427,21 @@
             if (!termo) return;
 
             const items = nsList.querySelectorAll('li');
-            let matchEncontrado = null;
+            let matchPendente = null;
+            let matchVerificado = null;
 
             items.forEach(li => {
-                if (!li.classList.contains('verificado') && li.dataset.linhaRaw.includes(termo)) {
-                    if (!matchEncontrado) matchEncontrado = li; 
+                if (li.dataset.linhaRaw.includes(termo)) {
+                    if (!li.classList.contains('verificado')) {
+                        if (!matchPendente) matchPendente = li; 
+                    } else {
+                        if (!matchVerificado) matchVerificado = li;
+                    }
                 }
             });
 
-            if (matchEncontrado) confirmarItem(matchEncontrado);
+            if (matchPendente) confirmarItem(matchPendente);
+            else if (matchVerificado) dispararAvisoVerificado(matchVerificado);
             else dispararErro();
         }
     });
@@ -420,6 +460,22 @@
         
         searchBar.value = '';
         searchBar.focus();
+    }
+
+    function dispararAvisoVerificado(li) {
+        li.classList.add('piscar-aviso');
+        li.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        alertWarning.style.display = 'block';
+        
+        // Toca um som de aviso
+        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
+        audio.play().catch(() => {}); 
+        
+        // Mantém o texto na barra, mas SELECIONA ele inteiro. 
+        // Assim o pisca-pisca continua até você apagar, ou caso você bipe o próximo item, 
+        // o leitor substituirá o texto atual sozinho!
+        searchBar.select();
     }
 
     function dispararErro() {
