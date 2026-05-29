@@ -15,7 +15,6 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            /* Flexbox no body para empurrar o rodapé para baixo se a tela for muito grande */
             display: flex;
             flex-direction: column;
             min-height: 95vh;
@@ -28,7 +27,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            flex: 1; /* Faz o container principal ocupar o espaço disponível */
+            flex: 1; 
             box-sizing: border-box;
         }
         h2 {
@@ -40,6 +39,18 @@
             justify-content: space-between;
             align-items: center;
         }
+        /* --- NOVO ESTILO PARA A LOGO E TÍTULO --- */
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Espaço entre a logo e o texto */
+        }
+        .logo-img {
+            height: 50px; /* Altura da logo. Pode aumentar ou diminuir se precisar */
+            width: auto;
+            border-radius: 8px; /* Deixa as bordas levemente arredondadas, opcional */
+        }
+        
         .painel-contagem {
             background-color: #303134;
             padding: 10px 20px;
@@ -234,7 +245,6 @@
             color: #137333;
         }
 
-        /* ----- ESTILO DO RODAPÉ (FOOTER) ----- */
         .footer {
             max-width: 1400px;
             width: 100%;
@@ -253,12 +263,12 @@
             margin: 5px 0;
         }
         .footer-lembrete {
-            color: #fbbc04; /* Amarelo de atenção */
+            color: #fbbc04; 
             font-weight: bold;
             margin-top: 10px;
         }
         .footer a {
-            color: #8ab4f8; /* Azul claro padrão do tema */
+            color: #8ab4f8; 
             text-decoration: none;
             font-weight: bold;
         }
@@ -271,7 +281,10 @@
 
 <div class="container">
     <h2>
-        Conferência de Transação
+        <div class="header-title">
+            <img src="img/favicon.png" alt="Logo Estoque" class="logo-img">
+            Conferência de Transação
+        </div>
         <div class="painel-contagem">
             Bipados: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
         </div>
