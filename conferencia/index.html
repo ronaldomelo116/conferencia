@@ -112,7 +112,6 @@
             text-align: center;
             border: 2px solid #c5221f;
         }
-        /* Novo Alerta Amarelo para Item Duplicado */
         #alert-warning {
             display: none;
             background-color: #fef7e0;
@@ -124,6 +123,18 @@
             margin-bottom: 20px;
             text-align: center;
             border: 2px solid #fbbc04;
+        }
+        /* NOVA CAIXA DE CONTAGEM DE FILTRO */
+        #info-filtro {
+            display: none;
+            background-color: #3c4043;
+            color: #fbbc04;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 6px solid #fbbc04;
         }
 
         .tabela-container {
@@ -153,9 +164,9 @@
             padding: 12px 15px;
             border-bottom: 1px solid #5f6368;
             font-size: 14px;
-            display: flex;
+            display: flex; /* Mantido como flex para alinhar as colunas */
             align-items: center;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease;
         }
         li:last-child {
             border-bottom: none;
@@ -191,7 +202,6 @@
             color: #fff !important;
         }
         
-        /* NOVO: Animação de Piscar Amarelo para Item Já Verificado */
         @keyframes piscarAmarelo {
             0% { background-color: #137333; border-left-color: #137333; }
             50% { background-color: #b06000; border-left-color: #fbbc04; }
@@ -238,10 +248,12 @@
         </div>
     </div>
 
-    <input type="text" id="searchBar" class="search-bar" placeholder="Bipe ou digite os últimos números..." disabled autocomplete="off">
+    <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
 
     <div id="alert-box">❌ ALERTA: Equipamento não encontrado na lista!</div>
     <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi bipado).</div>
+    
+    <div id="info-filtro">🔍 0 itens encontrados.</div>
 
     <div class="tabela-container">
         <div class="list-header" id="listHeader" style="display: none;">
@@ -274,6 +286,7 @@
     const listHeader = document.getElementById('listHeader');
     const alertBox = document.getElementById('alert-box');
     const alertWarning = document.getElementById('alert-warning');
+    const infoFiltro = document.getElementById('info-filtro');
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
 
@@ -296,8 +309,11 @@
         searchBar.value = '';
         searchBar.disabled = true;
         btnLimpar.disabled = true;
+        
+        // Esconde todos os alertas
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
+        infoFiltro.style.display = 'none';
     });
 
     fileInput.addEventListener('change', function(e) {
@@ -343,7 +359,6 @@
             let colsHTML = '';
             for(let i = 0; i < 8; i++) {
                 let valor = colunas[i] ? colunas[i].trim() : '-';
-                
                 if(i === 3) {
                     colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
                 } else {
@@ -369,56 +384,73 @@
         searchBar.focus();
     }
 
+    // NOVA LÓGICA DE FILTRO E BIPAGEM
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
         const items = nsList.querySelectorAll('li');
         
-        // Remove os efeitos visuais anteriores assim que o usuário digita/apaga algo
-        items.forEach(li => {
-            li.classList.remove('destaque-busca');
-            li.classList.remove('piscar-aviso');
-        });
-
-        // Esconde as caixas de erro e aviso
+        // Esconde avisos anteriores
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
+        infoFiltro.style.display = 'none';
 
-        if (!termo) return;
+        // 1. Se a barra for esvaziada, restaura a lista inteira
+        if (!termo) {
+            items.forEach(li => {
+                li.classList.remove('destaque-busca', 'piscar-aviso');
+                if (li.id !== 'mensagemVazia') li.style.display = 'flex'; 
+            });
+            return;
+        }
 
         let pendentes = [];
         let jaVerificados = [];
+        let totalEncontrados = 0;
 
+        // 2. Filtra a lista em tempo real
         items.forEach(li => {
+            li.classList.remove('destaque-busca', 'piscar-aviso');
+
+            // Se a linha contém o texto digitado
             if (li.dataset.linhaRaw.includes(termo)) {
+                totalEncontrados++;
+                li.style.display = 'flex'; // Mantém visível
+                
                 if (!li.classList.contains('verificado')) {
                     pendentes.push(li);
                     li.classList.add('destaque-busca'); 
                 } else {
                     jaVerificados.push(li);
                 }
+            } else {
+                // Se NÃO contém, esconde o item
+                li.style.display = 'none';
             }
         });
 
-        // Rola a tela para o item correspondente
-        if (pendentes.length > 0) {
-            pendentes[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (jaVerificados.length > 0) {
-            jaVerificados[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 3. Exibe o painel informando quantos itens foram filtrados
+        if (totalEncontrados > 0) {
+            infoFiltro.textContent = `🔍 Mostrando ${totalEncontrados} item(ns) encontrado(s) com "${termo}".`;
+            infoFiltro.style.display = 'block';
         }
 
+        // Timer para Validação Automática (Bipador)
         typingTimer = setTimeout(() => {
-            // Se achou um item pendente
-            if (pendentes.length === 1 && termo.length >= 4) {
-                confirmarItem(pendentes[0]);
-            } 
-            // Se NÃO achou pendentes, mas achou UM que já foi verificado
-            else if (pendentes.length === 0 && jaVerificados.length === 1 && termo.length >= 4) {
-                dispararAvisoVerificado(jaVerificados[0]);
-            }
-            // Se o leitor parou e não achou nada em lugar nenhum
-            else if (pendentes.length === 0 && jaVerificados.length === 0 && termo.length > 5) {
-                dispararErro();
+            // Regra de segurança: só auto-valida se for provável que seja um código de barras
+            // (Não contém espaços e tem mais de 3 letras/números)
+            const pareceCodigoBarras = !termo.includes(' ') && termo.length >= 4;
+
+            if (pareceCodigoBarras) {
+                if (pendentes.length === 1) {
+                    confirmarItem(pendentes[0]);
+                } 
+                else if (pendentes.length === 0 && jaVerificados.length === 1) {
+                    dispararAvisoVerificado(jaVerificados[0]);
+                }
+                else if (pendentes.length === 0 && jaVerificados.length === 0 && termo.length > 5) {
+                    dispararErro();
+                }
             }
         }, tempoDeEspera);
     });
@@ -462,28 +494,28 @@
             spanBipados.style.color = '#137333';
         }
         
-        searchBar.value = '';
-        searchBar.focus();
+        limparBarraERestaurarLista();
     }
 
     function dispararAvisoVerificado(li) {
+        // Mostra a linha novamente caso ela esteja escondida
+        li.style.display = 'flex';
         li.classList.add('piscar-aviso');
         li.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         alertWarning.style.display = 'block';
+        infoFiltro.style.display = 'none'; // Esconde o filtro para dar prioridade ao aviso
         
-        // Toca um som de aviso
         let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
         audio.play().catch(() => {}); 
         
-        // Mantém o texto na barra, mas SELECIONA ele inteiro. 
-        // Assim o pisca-pisca continua até você apagar, ou caso você bipe o próximo item, 
-        // o leitor substituirá o texto atual sozinho!
         searchBar.select();
     }
 
     function dispararErro() {
         alertBox.style.display = 'block';
+        infoFiltro.style.display = 'none';
+        
         let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
         audio.play().catch(() => {}); 
         
@@ -491,8 +523,15 @@
             alertBox.style.display = 'none';
         }, 3000);
         
+        limparBarraERestaurarLista();
+    }
+
+    // Função que zera a pesquisa e devolve todos os itens para a tela
+    function limparBarraERestaurarLista() {
         searchBar.value = '';
         searchBar.focus();
+        // Dispara o evento de 'input' artificialmente para que o código de filtro saiba que a barra está vazia
+        searchBar.dispatchEvent(new Event('input')); 
     }
 </script>
 
