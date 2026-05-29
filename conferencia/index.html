@@ -15,14 +15,21 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            /* Flexbox no body para empurrar o rodapé para baixo se a tela for muito grande */
+            display: flex;
+            flex-direction: column;
+            min-height: 95vh;
         }
         .container {
             max-width: 1400px;
+            width: 100%;
             margin: 0 auto;
             background-color: #202124;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            flex: 1; /* Faz o container principal ocupar o espaço disponível */
+            box-sizing: border-box;
         }
         h2 {
             color: #fff;
@@ -99,7 +106,6 @@
             box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
         }
         
-        /* Caixas de Alerta */
         #alert-box {
             display: none;
             background-color: #fce8e6;
@@ -124,7 +130,6 @@
             text-align: center;
             border: 2px solid #fbbc04;
         }
-        /* NOVA CAIXA DE CONTAGEM DE FILTRO */
         #info-filtro {
             display: none;
             background-color: #3c4043;
@@ -164,7 +169,7 @@
             padding: 12px 15px;
             border-bottom: 1px solid #5f6368;
             font-size: 14px;
-            display: flex; /* Mantido como flex para alinhar as colunas */
+            display: flex; 
             align-items: center;
             transition: background-color 0.2s ease;
         }
@@ -228,6 +233,38 @@
             background-color: #ceead6;
             color: #137333;
         }
+
+        /* ----- ESTILO DO RODAPÉ (FOOTER) ----- */
+        .footer {
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto 0 auto;
+            background-color: #202124;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            text-align: center;
+            color: #9aa0a6;
+            font-size: 14px;
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer-lembrete {
+            color: #fbbc04; /* Amarelo de atenção */
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .footer a {
+            color: #8ab4f8; /* Azul claro padrão do tema */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -278,6 +315,14 @@
     </div>
 </div>
 
+<div class="footer">
+    <p>&copy; 2026 Conferência de Estoque. Todos os direitos reservados. Criado por Ronaldo Melo</p>
+    <p class="footer-lembrete">
+        Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail 
+        <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a>
+    </p>
+</div>
+
 <script>
     const fileInput = document.getElementById('txtFile');
     const btnLimpar = document.getElementById('btnLimpar');
@@ -310,7 +355,6 @@
         searchBar.disabled = true;
         btnLimpar.disabled = true;
         
-        // Esconde todos os alertas
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
         infoFiltro.style.display = 'none';
@@ -384,18 +428,15 @@
         searchBar.focus();
     }
 
-    // NOVA LÓGICA DE FILTRO E BIPAGEM
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
         const items = nsList.querySelectorAll('li');
         
-        // Esconde avisos anteriores
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
         infoFiltro.style.display = 'none';
 
-        // 1. Se a barra for esvaziada, restaura a lista inteira
         if (!termo) {
             items.forEach(li => {
                 li.classList.remove('destaque-busca', 'piscar-aviso');
@@ -408,14 +449,12 @@
         let jaVerificados = [];
         let totalEncontrados = 0;
 
-        // 2. Filtra a lista em tempo real
         items.forEach(li => {
             li.classList.remove('destaque-busca', 'piscar-aviso');
 
-            // Se a linha contém o texto digitado
             if (li.dataset.linhaRaw.includes(termo)) {
                 totalEncontrados++;
-                li.style.display = 'flex'; // Mantém visível
+                li.style.display = 'flex'; 
                 
                 if (!li.classList.contains('verificado')) {
                     pendentes.push(li);
@@ -424,21 +463,16 @@
                     jaVerificados.push(li);
                 }
             } else {
-                // Se NÃO contém, esconde o item
                 li.style.display = 'none';
             }
         });
 
-        // 3. Exibe o painel informando quantos itens foram filtrados
         if (totalEncontrados > 0) {
             infoFiltro.textContent = `🔍 Mostrando ${totalEncontrados} item(ns) encontrado(s) com "${termo}".`;
             infoFiltro.style.display = 'block';
         }
 
-        // Timer para Validação Automática (Bipador)
         typingTimer = setTimeout(() => {
-            // Regra de segurança: só auto-valida se for provável que seja um código de barras
-            // (Não contém espaços e tem mais de 3 letras/números)
             const pareceCodigoBarras = !termo.includes(' ') && termo.length >= 4;
 
             if (pareceCodigoBarras) {
@@ -498,13 +532,12 @@
     }
 
     function dispararAvisoVerificado(li) {
-        // Mostra a linha novamente caso ela esteja escondida
         li.style.display = 'flex';
         li.classList.add('piscar-aviso');
         li.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         alertWarning.style.display = 'block';
-        infoFiltro.style.display = 'none'; // Esconde o filtro para dar prioridade ao aviso
+        infoFiltro.style.display = 'none'; 
         
         let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
         audio.play().catch(() => {}); 
@@ -526,11 +559,9 @@
         limparBarraERestaurarLista();
     }
 
-    // Função que zera a pesquisa e devolve todos os itens para a tela
     function limparBarraERestaurarLista() {
         searchBar.value = '';
         searchBar.focus();
-        // Dispara o evento de 'input' artificialmente para que o código de filtro saiba que a barra está vazia
         searchBar.dispatchEvent(new Event('input')); 
     }
 </script>
