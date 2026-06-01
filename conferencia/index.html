@@ -75,6 +75,7 @@
             align-items: center;
             gap: 15px;
             margin-top: 10px;
+            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
         }
         input[type="file"] {
             color: #8ab4f8;
@@ -99,6 +100,41 @@
             color: #9aa0a6;
             cursor: not-allowed;
         }
+        
+        /* NOVO: Estilos da área de colagem */
+        .paste-area {
+            width: 100%;
+            padding: 12px;
+            background-color: #171717;
+            border: 1px solid #5f6368;
+            color: #fff;
+            border-radius: 6px;
+            margin-top: 15px;
+            box-sizing: border-box;
+            font-family: monospace;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .paste-area:focus {
+            border-color: #8ab4f8;
+            outline: none;
+        }
+        .btn-carregar {
+            background-color: #8ab4f8;
+            color: #202124;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .btn-carregar:hover {
+            background-color: #aecbfa;
+        }
+
         .search-bar {
             width: 100%;
             padding: 15px;
@@ -290,11 +326,15 @@
     </h2>
     
     <div class="upload-section">
-        <label for="txtFile">1. Envie o arquivo (.txt ou .csv):</label>
+        <label>1. Envie o arquivo da tabela OU cole os dados diretamente abaixo:</label>
+        
         <div class="upload-controls">
             <input type="file" id="txtFile" accept=".txt, .csv">
             <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
         </div>
+        
+        <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
+        <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
     </div>
 
     <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
@@ -346,16 +386,18 @@
     const infoFiltro = document.getElementById('info-filtro');
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
+    
+    // Novos elementos
+    const pasteArea = document.getElementById('pasteArea');
+    const btnCarregarTexto = document.getElementById('btnCarregarTexto');
 
     let totalItens = 0;
     let itensBipados = 0;
     let typingTimer;
     const tempoDeEspera = 150; 
     
-    // NOVO: Array que vai guardar os dados para não perder na atualização da página
     let estoqueDados = []; 
 
-    // --- CARREGAMENTO INICIAL AO ABRIR A PÁGINA ---
     window.onload = function() {
         const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
         if (dadosSalvos) {
@@ -367,12 +409,10 @@
         }
     };
 
-    // --- FUNÇÃO PARA SALVAR O ESTADO ATUAL NO NAVEGADOR ---
     function salvarNaMemoria() {
         localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
     }
 
-    // --- BOTÃO DE LIMPAR (Agora apaga do navegador também) ---
     btnLimpar.addEventListener('click', function() {
         nsList.innerHTML = '<li id="mensagemVazia" style="color: #9aa0a6; text-align: center; justify-content: center;">Os itens da transação aparecerão aqui organizados em colunas.</li>';
         listHeader.style.display = 'none'; 
@@ -384,6 +424,7 @@
         spanBipados.style.color = '#8ab4f8'; 
         
         fileInput.value = '';
+        pasteArea.value = ''; // Limpa a caixa de texto também
         searchBar.value = '';
         searchBar.disabled = true;
         btnLimpar.disabled = true;
@@ -392,48 +433,67 @@
         alertWarning.style.display = 'none';
         infoFiltro.style.display = 'none';
         
-        // Zera o array e apaga do LocalStorage
         estoqueDados = [];
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- LEITURA DO ARQUIVO UPLOAD ---
+    // --- NOVA FUNÇÃO CENTRALIZADA PARA PROCESSAR O TEXTO (Seja Arquivo ou Colado) ---
+    function processarConteudo(content) {
+        let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
+        
+        if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
+            linhas.shift(); // Remove cabeçalho se houver
+        }
+
+        // Caso o usuário tente adicionar dados novos numa lista já existente
+        let novosDados = linhas.map(linha => {
+            return {
+                linhaOriginal: linha.trim(),
+                linhaUpper: linha.trim().toUpperCase(),
+                verificado: false
+            };
+        });
+
+        // Adiciona à lista atual (permite colar várias vezes para juntar itens)
+        estoqueDados = estoqueDados.concat(novosDados);
+
+        salvarNaMemoria(); 
+        renderizarDaMemoria(); 
+        btnLimpar.disabled = false;
+        
+        // Limpa a área de colagem para não poluir a tela
+        pasteArea.value = '';
+    }
+
+    // Leitura via Arquivo
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const content = e.target.result;
-            let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
-            
-            if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
-                linhas.shift();
-            }
-
-            // Transforma as linhas cruas em objetos e salva no Array
-            estoqueDados = linhas.map(linha => {
-                return {
-                    linhaOriginal: linha.trim(),
-                    linhaUpper: linha.trim().toUpperCase(),
-                    verificado: false
-                };
-            });
-
-            salvarNaMemoria(); // Salva no navegador
-            renderizarDaMemoria(); // Desenha na tela
-            btnLimpar.disabled = false;
+            processarConteudo(e.target.result);
+            fileInput.value = ''; // Reseta o input para permitir subir o mesmo arquivo depois
         };
         reader.readAsText(file);
     });
 
-    // --- RENDERIZAR LISTA COM BASE NOS DADOS SALVOS ---
+    // Leitura via Texto Colado
+    btnCarregarTexto.addEventListener('click', function() {
+        const textoColado = pasteArea.value;
+        if (!textoColado.trim()) {
+            alert('Por favor, cole os dados da tabela na caixa de texto primeiro!');
+            pasteArea.focus();
+            return;
+        }
+        processarConteudo(textoColado);
+    });
+
     function renderizarDaMemoria() {
         nsList.innerHTML = ''; 
         listHeader.style.display = 'flex'; 
         
         totalItens = estoqueDados.length;
-        // Conta quantos itens já estão verificados no cache salvo
         itensBipados = estoqueDados.filter(item => item.verificado).length; 
         
         spanTotal.textContent = totalItens;
@@ -461,10 +521,9 @@
             }
 
             const li = document.createElement('li');
-            li.dataset.index = index; // Guarda o ID único do item
+            li.dataset.index = index; 
             li.dataset.linhaRaw = item.linhaUpper; 
             
-            // Verifica se no cache ele já estava como "OK"
             if (item.verificado) {
                 li.classList.add('verificado');
                 li.innerHTML = `
@@ -488,7 +547,6 @@
         searchBar.focus();
     }
 
-    // --- BUSCA, FILTRO E AUTOBIPAGEM ---
     searchBar.addEventListener('input', function() {
         clearTimeout(typingTimer); 
         const termo = this.value.trim().toUpperCase();
@@ -577,13 +635,11 @@
         }
     });
 
-    // --- FUNÇÕES DE AÇÃO ---
     function confirmarItem(li) {
         li.classList.remove('destaque-busca');
         li.classList.add('verificado');
         li.querySelector('.status-badge').textContent = 'OK';
         
-        // --- NOVO: ATUALIZA O CACHE DE DADOS E SALVA ---
         const indexDoItem = li.dataset.index;
         estoqueDados[indexDoItem].verificado = true;
         salvarNaMemoria();
