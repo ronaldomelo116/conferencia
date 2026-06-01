@@ -8,6 +8,11 @@
     <link rel="apple-touch-icon" href="img/favicon.png">
     <link rel="icon" type="img/png" href="favicon.png">
     <link rel="shortcut icon" type="img/png" href="img/favicon.png">
+    
+    <!-- Bibliotecas necessárias para gerar o PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         body {
             background-color: #F37021; 
@@ -96,6 +101,26 @@
             background-color: #a51b19;
         }
         .btn-limpar:disabled {
+            background-color: #5f6368;
+            color: #9aa0a6;
+            cursor: not-allowed;
+        }
+
+        .btn-pdf {
+            background-color: #137333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-pdf:hover {
+            background-color: #0d5022;
+        }
+        .btn-pdf:disabled {
             background-color: #5f6368;
             color: #9aa0a6;
             cursor: not-allowed;
@@ -320,7 +345,7 @@
             Conferência de Transação
         </div>
         <div class="painel-contagem">
-            Bipados: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
+            Conferidos: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
         </div>
     </h2>
     
@@ -330,6 +355,7 @@
         <div class="upload-controls">
             <input type="file" id="txtFile" accept=".txt, .csv">
             <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
+            <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
         </div>
         
         <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
@@ -339,7 +365,7 @@
     <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
 
     <div id="alert-box">❌ ALERTA: item não encontrado na lista</div>
-    <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi bipado).</div>
+    <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi conferido).</div>
     
     <div id="info-filtro">🔍 0 itens encontrados.</div>
 
@@ -377,6 +403,7 @@
 <script>
     const fileInput = document.getElementById('txtFile');
     const btnLimpar = document.getElementById('btnLimpar');
+    const btnBaixarPDF = document.getElementById('btnBaixarPDF');
     const searchBar = document.getElementById('searchBar');
     const nsList = document.getElementById('nsList');
     const listHeader = document.getElementById('listHeader');
@@ -403,6 +430,7 @@
             if (estoqueDados.length > 0) {
                 renderizarDaMemoria();
                 btnLimpar.disabled = false;
+                btnBaixarPDF.disabled = false;
             }
         }
     };
@@ -426,6 +454,7 @@
         searchBar.value = '';
         searchBar.disabled = true;
         btnLimpar.disabled = true;
+        btnBaixarPDF.disabled = true; 
         
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
@@ -455,6 +484,7 @@
         salvarNaMemoria(); 
         renderizarDaMemoria(); 
         btnLimpar.disabled = false;
+        btnBaixarPDF.disabled = false; 
         
         pasteArea.value = '';
     }
@@ -479,6 +509,64 @@
             return;
         }
         processarConteudo(textoColado);
+    });
+
+    btnBaixarPDF.addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape'); 
+        
+        doc.setFontSize(16);
+        doc.text("Relatório de Conferência de Estoque", 14, 15);
+        
+        doc.setFontSize(11);
+        doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
+
+        const tableColumn = ["Código", "Data", "Nome do Equipamento", "Nº Série", "Nº Série Interno", "Estado", "Qtd", "Funcionário", "Status"];
+        const tableRows = [];
+
+        estoqueDados.forEach(item => {
+            let limpo = item.linhaOriginal.replace(/"/g, ''); 
+            let separador = '\t';
+            if (limpo.includes('\t')) separador = '\t';
+            else if (limpo.includes(';')) separador = ';';
+            else if (limpo.includes(',')) separador = ',';
+
+            let colunas = limpo.split(separador);
+            
+            let rowData = [];
+            for(let i = 0; i < 8; i++) {
+                rowData.push(colunas[i] ? colunas[i].trim() : '-');
+            }
+            
+            rowData.push(item.verificado ? 'OK' : 'Pendente');
+            tableRows.push(rowData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 28,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [243, 112, 33] },
+            didParseCell: function(data) {
+                if (data.column.index === 8) {
+                    if (data.cell.raw === 'OK') {
+                        data.cell.styles.textColor = [19, 115, 51]; 
+                        data.cell.styles.fontStyle = 'bold';
+                    } else {
+                        data.cell.styles.textColor = [197, 34, 31]; 
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            }
+        });
+
+        const hoje = new Date();
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const ano = hoje.getFullYear();
+        
+        doc.save(`Relatorio_Estoque_${dia}-${mes}-${ano}.pdf`);
     });
 
     function renderizarDaMemoria() {
@@ -666,7 +754,6 @@
         searchBar.select();
     }
 
-    // AQUI OCORREU A MUDANÇA: O texto não é mais apagado no erro!
     function dispararErro() {
         alertBox.style.display = 'block';
         infoFiltro.style.display = 'none';
@@ -678,9 +765,6 @@
             alertBox.style.display = 'none';
         }, 3000);
         
-        // Em vez de limpar a barra inteira, apenas selecionamos o texto.
-        // O texto que gerou erro continuará visível, mas será apagado 
-        // automaticamente pelo próprio bipador na próxima leitura!
         searchBar.select(); 
     }
 
