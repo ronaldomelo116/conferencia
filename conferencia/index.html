@@ -75,7 +75,7 @@
             align-items: center;
             gap: 15px;
             margin-top: 10px;
-            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
+            flex-wrap: wrap;
         }
         input[type="file"] {
             color: #8ab4f8;
@@ -101,7 +101,6 @@
             cursor: not-allowed;
         }
         
-        /* NOVO: Estilos da área de colagem */
         .paste-area {
             width: 100%;
             padding: 12px;
@@ -339,7 +338,7 @@
 
     <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
 
-    <div id="alert-box">❌ ALERTA: Equipamento não encontrado na lista!</div>
+    <div id="alert-box">❌ ALERTA: item não encontrado na lista</div>
     <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi bipado).</div>
     
     <div id="info-filtro">🔍 0 itens encontrados.</div>
@@ -387,7 +386,6 @@
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
     
-    // Novos elementos
     const pasteArea = document.getElementById('pasteArea');
     const btnCarregarTexto = document.getElementById('btnCarregarTexto');
 
@@ -424,7 +422,7 @@
         spanBipados.style.color = '#8ab4f8'; 
         
         fileInput.value = '';
-        pasteArea.value = ''; // Limpa a caixa de texto também
+        pasteArea.value = ''; 
         searchBar.value = '';
         searchBar.disabled = true;
         btnLimpar.disabled = true;
@@ -437,15 +435,13 @@
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- NOVA FUNÇÃO CENTRALIZADA PARA PROCESSAR O TEXTO (Seja Arquivo ou Colado) ---
     function processarConteudo(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         
         if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
-            linhas.shift(); // Remove cabeçalho se houver
+            linhas.shift(); 
         }
 
-        // Caso o usuário tente adicionar dados novos numa lista já existente
         let novosDados = linhas.map(linha => {
             return {
                 linhaOriginal: linha.trim(),
@@ -454,18 +450,15 @@
             };
         });
 
-        // Adiciona à lista atual (permite colar várias vezes para juntar itens)
         estoqueDados = estoqueDados.concat(novosDados);
 
         salvarNaMemoria(); 
         renderizarDaMemoria(); 
         btnLimpar.disabled = false;
         
-        // Limpa a área de colagem para não poluir a tela
         pasteArea.value = '';
     }
 
-    // Leitura via Arquivo
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -473,12 +466,11 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             processarConteudo(e.target.result);
-            fileInput.value = ''; // Reseta o input para permitir subir o mesmo arquivo depois
+            fileInput.value = ''; 
         };
         reader.readAsText(file);
     });
 
-    // Leitura via Texto Colado
     btnCarregarTexto.addEventListener('click', function() {
         const textoColado = pasteArea.value;
         if (!textoColado.trim()) {
@@ -587,8 +579,17 @@
         });
 
         if (totalEncontrados > 0) {
-            infoFiltro.textContent = `🔍 Mostrando ${totalEncontrados} item(ns) encontrado(s) com "${termo}".`;
+            infoFiltro.innerHTML = `🔍 Mostrando <strong>${totalEncontrados}</strong> item(ns) encontrado(s) com "${termo}".`;
             infoFiltro.style.display = 'block';
+            infoFiltro.style.backgroundColor = '#3c4043';
+            infoFiltro.style.color = '#fbbc04';
+            infoFiltro.style.borderLeftColor = '#fbbc04';
+        } else {
+            infoFiltro.innerHTML = `⚠️ Nenhum item correspondente para "<strong>${termo}</strong>".`;
+            infoFiltro.style.display = 'block';
+            infoFiltro.style.backgroundColor = '#fce8e6';
+            infoFiltro.style.color = '#c5221f';
+            infoFiltro.style.borderLeftColor = '#c5221f';
         }
 
         typingTimer = setTimeout(() => {
@@ -600,9 +601,6 @@
                 } 
                 else if (pendentes.length === 0 && jaVerificados.length === 1) {
                     dispararAvisoVerificado(jaVerificados[0]);
-                }
-                else if (pendentes.length === 0 && jaVerificados.length === 0 && termo.length > 5) {
-                    dispararErro();
                 }
             }
         }, tempoDeEspera);
@@ -631,7 +629,7 @@
 
             if (matchPendente) confirmarItem(matchPendente);
             else if (matchVerificado) dispararAvisoVerificado(matchVerificado);
-            else dispararErro();
+            else dispararErro(); 
         }
     });
 
@@ -668,6 +666,7 @@
         searchBar.select();
     }
 
+    // AQUI OCORREU A MUDANÇA: O texto não é mais apagado no erro!
     function dispararErro() {
         alertBox.style.display = 'block';
         infoFiltro.style.display = 'none';
@@ -679,7 +678,10 @@
             alertBox.style.display = 'none';
         }, 3000);
         
-        limparBarraERestaurarLista();
+        // Em vez de limpar a barra inteira, apenas selecionamos o texto.
+        // O texto que gerou erro continuará visível, mas será apagado 
+        // automaticamente pelo próprio bipador na próxima leitura!
+        searchBar.select(); 
     }
 
     function limparBarraERestaurarLista() {
