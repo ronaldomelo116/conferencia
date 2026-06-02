@@ -110,11 +110,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
+            gap: 15px;
         }
         .header-title {
             display: flex;
             align-items: center;
             gap: 15px; 
+            flex-wrap: wrap;
         }
         .logo-img {
             height: 50px; 
@@ -122,25 +125,20 @@
             border-radius: 8px; 
         }
 
-        /* --- NOVO ESTILO: INPUT DO CÓDIGO DA TRANSAÇÃO --- */
-        .transaction-code-input {
+        /* --- NOVO CAMPO DA TRANSAÇÃO NO TOPO --- */
+        .input-transacao {
             background-color: var(--bg-input);
-            border: 1px solid var(--primary-color);
             color: var(--text-main);
-            padding: 8px 12px;
-            font-size: 16px;
+            border: 2px solid var(--primary-color);
+            padding: 8px 15px;
             border-radius: 6px;
+            font-size: 16px;
             outline: none;
-            width: 220px;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
+            width: 250px;
+            transition: box-shadow 0.2s;
         }
-        .transaction-code-input:focus {
-            box-shadow: 0 0 8px rgba(138, 180, 248, 0.4);
-        }
-        .transaction-code-input::placeholder {
-            color: var(--text-muted);
-            opacity: 0.7;
+        .input-transacao:focus {
+            box-shadow: 0 0 5px rgba(138, 180, 248, 0.5);
         }
         
         .painel-contagem {
@@ -150,6 +148,7 @@
             font-size: 20px;
             border: 2px solid var(--primary-color);
             color: var(--text-title);
+            white-space: nowrap;
         }
         .painel-contagem span {
             color: var(--primary-color);
@@ -449,9 +448,10 @@
     <h2>
         <div class="header-title">
             <img src="img/favicon.png" alt="Logo Estoque" class="logo-img">
-            <span>Conferência de Transação</span>
-            <!-- NOVO INPUT: Código da Transação adicionado ao lado do título -->
-            <input type="text" id="transactionCodeInput" class="transaction-code-input" placeholder="código da transação" autocomplete="off">
+            Conferência de Transação
+            
+            <!-- NOVO: Campo de Código da Transação -->
+            <input type="text" id="inputTransacao" class="input-transacao" placeholder="código da transação" autocomplete="off">
         </div>
         <div class="painel-contagem">
             Conferidos: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
@@ -510,7 +510,6 @@
 </div>
 
 <script>
-    // --- LÓGICA DO TEMA CLARO/ESCURO ---
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -519,6 +518,7 @@
     themeToggleBtn.addEventListener('click', () => {
         let currentTheme = document.documentElement.getAttribute('data-theme');
         let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('themeBrisanet', newTheme);
         atualizarBotaoTema(newTheme);
@@ -532,11 +532,11 @@
         }
     }
 
-    // --- LÓGICA PRINCIPAL DO SISTEMA ---
     const fileInput = document.getElementById('txtFile');
     const btnLimpar = document.getElementById('btnLimpar');
     const btnBaixarPDF = document.getElementById('btnBaixarPDF');
     const searchBar = document.getElementById('searchBar');
+    const inputTransacao = document.getElementById('inputTransacao'); // NOVO: Referência do input da transação
     const nsList = document.getElementById('nsList');
     const listHeader = document.getElementById('listHeader');
     const alertBox = document.getElementById('alert-box');
@@ -544,7 +544,6 @@
     const infoFiltro = document.getElementById('info-filtro');
     const spanBipados = document.getElementById('qtdBipados');
     const spanTotal = document.getElementById('qtdTotal');
-    const transactionCodeInput = document.getElementById('transactionCodeInput');
     
     const pasteArea = document.getElementById('pasteArea');
     const btnCarregarTexto = document.getElementById('btnCarregarTexto');
@@ -556,9 +555,8 @@
     
     let estoqueDados = []; 
 
-    // --- CARREGAMENTO INICIAL COM LOCALSTORAGE ---
     window.onload = function() {
-        // Carrega dados da tabela
+        // Carrega a lista da memória
         const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
         if (dadosSalvos) {
             estoqueDados = JSON.parse(dadosSalvos);
@@ -568,10 +566,11 @@
                 btnBaixarPDF.disabled = false;
             }
         }
-        // Carrega o código da transação se houver
-        const codigoSalvo = localStorage.getItem('transactionCodeBrisanet');
-        if (codigoSalvo) {
-            transactionCodeInput.value = codigoSalvo;
+        
+        // NOVO: Carrega o código da transação se ele foi salvo
+        const transacaoSalva = localStorage.getItem('codigoTransacaoBrisanet');
+        if (transacaoSalva) {
+            inputTransacao.value = transacaoSalva;
         }
     };
 
@@ -579,9 +578,9 @@
         localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
     }
 
-    // Monitora a digitação do código da transação para salvar na hora
-    transactionCodeInput.addEventListener('input', function() {
-        localStorage.setItem('transactionCodeBrisanet', this.value);
+    // NOVO: Salva em tempo real enquanto o usuário digita o código da transação
+    inputTransacao.addEventListener('input', function() {
+        localStorage.setItem('codigoTransacaoBrisanet', this.value.trim());
     });
 
     btnLimpar.addEventListener('click', function() {
@@ -597,10 +596,13 @@
         fileInput.value = '';
         pasteArea.value = ''; 
         searchBar.value = '';
-        transactionCodeInput.value = ''; // Limpa o código da transação da tela
         searchBar.disabled = true;
         btnLimpar.disabled = true;
         btnBaixarPDF.disabled = true; 
+        
+        // NOVO: Limpa o campo do código da transação
+        inputTransacao.value = '';
+        localStorage.removeItem('codigoTransacaoBrisanet');
         
         alertBox.style.display = 'none';
         alertWarning.style.display = 'none';
@@ -608,7 +610,6 @@
         
         estoqueDados = [];
         localStorage.removeItem('dadosConferenciaBrisanet');
-        localStorage.removeItem('transactionCodeBrisanet'); // Limpa a transação do cache
     });
 
     function processarConteudo(content) {
@@ -620,8 +621,8 @@
 
         let novosDados = linhas.map(linha => {
             return {
-                linhaOriginal: line.trim(),
-                linhaUpper: line.trim().toUpperCase(),
+                linhaOriginal: linha.trim(),
+                linhaUpper: linha.trim().toUpperCase(),
                 verificado: false
             };
         });
@@ -658,30 +659,25 @@
         processarConteudo(textoColado);
     });
 
-    // --- GERADOR DE PDF COM O CÓDIGO DA TRANSAÇÃO ---
+    // --- BOTÃO BAIXAR PDF (AGORA COM O CÓDIGO DA TRANSAÇÃO NO TOPO) ---
     btnBaixarPDF.addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('landscape'); 
         
         doc.setFontSize(16);
-        doc.text("Relatório de Conferência de Estoque", 14, 15);
         
-        let startYTable = 28;
-        doc.setFontSize(11);
+        // Pega o código da transação se o usuário tiver preenchido
+        const codTransacao = inputTransacao.value.trim();
+        let tituloPDF = "Relatório de Conferência de Estoque";
         
-        // Verifica se o usuário inseriu um código de transação
-        const codigoTransacao = transactionCodeInput.value.trim();
-        
-        if (codigoTransacao) {
-            doc.setFont(undefined, 'bold');
-            doc.text(`Código da Transação: ${codigoTransacao}`, 14, 22);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 29);
-            startYTable = 34; // Empurra a tabela para baixo para não sobrepor o texto
-        } else {
-            doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
-            startYTable = 28;
+        // Se existir código, joga no título do PDF
+        if (codTransacao) {
+            tituloPDF += ` - Transação: ${codTransacao}`;
         }
+        doc.text(tituloPDF, 14, 15);
+        
+        doc.setFontSize(11);
+        doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
 
         const tableColumn = ["Código", "Data", "Nome do Equipamento", "Nº Série", "Nº Série Interno", "Estado", "Qtd", "Funcionário", "Status"];
         const tableRows = [];
@@ -707,7 +703,7 @@
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
-            startY: startYTable,
+            startY: 28,
             styles: { fontSize: 8 },
             headStyles: { fillColor: [243, 112, 33] },
             didParseCell: function(data) {
@@ -728,9 +724,12 @@
         const mes = String(hoje.getMonth() + 1).padStart(2, '0');
         const ano = hoje.getFullYear();
         
-        // Se houver transação, inclui ela no nome do arquivo baixado
-        const nomeArquivo = codigoTransacao ? `Relatorio_Transacao_${codigoTransacao}_${dia}-${mes}-${ano}.pdf` : `Relatorio_Estoque_${dia}-${mes}-${ano}.pdf`;
-        doc.save(nomeArquivo);
+        // Bônus: Muda o nome do arquivo se a transação for preenchida!
+        let fileName = codTransacao 
+            ? `Transacao_${codTransacao}_${dia}-${mes}-${ano}.pdf` 
+            : `Relatorio_Estoque_${dia}-${mes}-${ano}.pdf`;
+            
+        doc.save(fileName);
     });
 
     function renderizarDaMemoria() {
