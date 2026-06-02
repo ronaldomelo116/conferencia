@@ -3,29 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extrator de Texto com Tema</title>
+    <title>Extrator de imagems</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="img/favicon.png">
     <link rel="icon" type="img/png" href="favicon.png">
     <link rel="shortcut icon" type="img/png" href="img/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        /* Variáveis de cores para facilitar o tema escuro */
+        
         :root {
-            --bg-color: #F37021; /* Fundo Laranja exato */
+            --bg-color: #F37021;
             --text-color: #333;
             --container-bg: #fff;
             --input-border: #ccc;
             --item-bg: #f1f1f1;
+            --placeholder-color: #777;
         }
 
-        /* Cores do Modo Escuro */
+        
         body.dark-mode {
-            /* O fundo permanece laranja, alteramos apenas os elementos internos */
             --text-color: #e0e0e0;
             --container-bg: #2d2d2d;
             --input-border: #555;
             --item-bg: #3d3d3d;
+            --placeholder-color: #aaa;
         }
 
         body {
@@ -42,7 +43,6 @@
             box-sizing: border-box;
         }
 
-        /* Botão de Tema no canto superior direito */
         .theme-toggle {
             position: absolute;
             top: 20px;
@@ -57,10 +57,11 @@
             font-size: 14px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: 0.3s;
+            z-index: 1000;
         }
         body.dark-mode .theme-toggle {
             background-color: #fff;
-            color: #F37021; /* Texto laranja no botão branco no modo escuro */
+            color: #F37021;
         }
 
         h2 { text-align: center; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
@@ -68,7 +69,9 @@
         .main-wrapper {
             width: 100%;
             max-width: 600px;
-            flex-grow: 1; /* Permite que o conteúdo empurre o rodapé para baixo */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .upload-container, .result-container {
@@ -83,6 +86,19 @@
             transition: background-color 0.3s;
         }
 
+        .upload-instruction {
+            text-align: center;
+            color: var(--placeholder-color);
+            border: 2px dashed var(--input-border);
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .upload-instruction:hover {
+            border-color: #F37021;
+        }
+
         select, input[type="file"] {
             padding: 10px;
             font-size: 16px;
@@ -90,28 +106,48 @@
             border: 1px solid var(--input-border);
             background-color: var(--container-bg);
             color: var(--text-color);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         img {
             max-width: 100%;
             border-radius: 5px;
             border: 1px solid var(--input-border);
+            margin-top: 10px;
         }
 
-        button.action-btn {
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        button {
             padding: 12px;
-            background-color: #28a745;
-            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        button.action-btn {
+            background-color: #28a745;
+            color: white;
+            flex: 2;
         }
         button.action-btn:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
             color: #666;
+        }
+
+        button.clear-btn {
+            background-color: #dc3545;
+            color: white;
+            flex: 1;
         }
 
         #status { font-weight: bold; color: #000; text-align: center; }
@@ -126,7 +162,6 @@
             transition: background-color 0.3s;
         }
 
-        /* Estilos do Rodapé */
         footer {
             text-align: center;
             color: #fff;
@@ -134,6 +169,8 @@
             font-size: 13px;
             line-height: 1.5;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 600px;
         }
         footer a {
             color: #fff;
@@ -153,8 +190,11 @@
         <h2>Extrator Inteligente de Imagem</h2>
 
         <div class="upload-container">
-            <label for="imageInput"><strong>1. Faça o upload da imagem:</strong></label>
-            <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp">
+            <label for="imageInput" class="upload-instruction" id="dropArea">
+                <strong>1. Selecione ou COLE uma imagem:</strong><br>
+                <small>(Clique aqui para abrir ou cole com Ctrl+V)</small>
+            </label>
+            <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp" style="display:none;">
             
             <label for="filterSelect"><strong>2. O que você quer extrair?</strong></label>
             <select id="filterSelect">
@@ -165,7 +205,11 @@
 
             <img id="imagePreview" style="display:none;" alt="Preview da Imagem">
             
-            <button id="extractBtn" class="action-btn" style="display:none;">Extrair e Gerar Lista</button>
+            <div class="button-group" id="buttonGroup" style="display:none;">
+                <button id="extractBtn" class="action-btn">Extrair e Gerar Lista</button>
+                <button id="clearBtn" class="clear-btn">Limpar</button>
+            </div>
+            
             <p id="status"></p>
         </div>
 
@@ -176,51 +220,148 @@
     </div>
 
     <footer>
-        <p>© 2026 Extrator Inteligente de Imagem. Todos os direitos reservados. Criado por Ronaldo Melo</p>
+        <p>© 2026 Extrator de imagems. Todos os direitos reservados. Criado por Ronaldo Melo</p>
         <p>Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a></p>
     </footer>
 
     <script>
-        // Lógica do Tema (Claro / Escuro)
+        // Lógica do Tema
         const themeToggle = document.getElementById('themeToggle');
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            
-            if (document.body.classList.contains('dark-mode')) {
+        const getPreferredTheme = () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) return savedTheme;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        };
+
+        const setTheme = (theme) => {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
                 themeToggle.innerText = '☀️ Modo Claro';
             } else {
+                document.body.classList.remove('dark-mode');
                 themeToggle.innerText = '🌙 Modo Escuro';
+            }
+            localStorage.setItem('theme', theme);
+        };
+
+        setTheme(getPreferredTheme());
+
+        themeToggle.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                setTheme('light');
+            } else {
+                setTheme('dark');
             }
         });
 
-        // Lógica de Extração de Texto
         const imageInput = document.getElementById('imageInput');
         const filterSelect = document.getElementById('filterSelect');
         const imagePreview = document.getElementById('imagePreview');
+        const buttonGroup = document.getElementById('buttonGroup');
         const extractBtn = document.getElementById('extractBtn');
+        const clearBtn = document.getElementById('clearBtn');
         const statusText = document.getElementById('status');
         const outputList = document.getElementById('outputList');
         const resultContainer = document.getElementById('resultContainer');
 
-        imageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    extractBtn.style.display = 'block';
-                    statusText.innerText = '';
-                    outputList.innerHTML = '';
-                    resultContainer.style.display = 'none';
+        // FUNÇÃO: Carregar imagem e lista salvas ao abrir a página
+        function loadSavedData() {
+            const savedImage = localStorage.getItem('savedImageData');
+            if (savedImage) {
+                imagePreview.src = savedImage;
+                imagePreview.style.display = 'block';
+                buttonGroup.style.display = 'flex';
+                statusText.innerText = 'Imagem recuperada da última sessão.';
+
+                // Tenta puxar a lista salva também
+                const savedList = localStorage.getItem('savedListData');
+                if (savedList) {
+                    try {
+                        const itens = JSON.parse(savedList);
+                        if (itens.length > 0) {
+                            outputList.innerHTML = '';
+                            itens.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item;
+                                outputList.appendChild(li);
+                            });
+                            resultContainer.style.display = 'flex';
+                            statusText.innerText = 'Imagem e lista recuperadas da última sessão.';
+                        }
+                    } catch (e) {
+                        console.error("Erro ao ler a lista salva.");
+                    }
                 }
-                reader.readAsDataURL(file);
+            }
+        }
+        
+        loadSavedData();
+
+        // FUNÇÃO: Processar imagem nova
+        function processImage(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                statusText.innerText = 'Por favor, forneça um arquivo de imagem válido.';
+                statusText.style.color = 'red';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                imagePreview.src = base64Image;
+                imagePreview.style.display = 'block';
+                buttonGroup.style.display = 'flex';
+                statusText.innerText = 'Imagem pronta. Clique para extrair.';
+                statusText.style.color = 'inherit';
+                outputList.innerHTML = '';
+                resultContainer.style.display = 'none';
+
+                // Salva a nova imagem e apaga a lista antiga para não haver confusão
+                try {
+                    localStorage.setItem('savedImageData', base64Image);
+                    localStorage.removeItem('savedListData');
+                } catch (error) {
+                    console.warn("Imagem muito grande para salvar.");
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+
+        imageInput.addEventListener('change', function() {
+            processImage(this.files[0]);
+        });
+
+        document.addEventListener('paste', function(event) {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    processImage(blob);
+                    event.preventDefault(); 
+                    break;
+                }
             }
         });
 
+        // FUNÇÃO: Botão Limpar
+        clearBtn.addEventListener('click', function() {
+            localStorage.removeItem('savedImageData');
+            localStorage.removeItem('savedListData'); // Remove a lista também
+            imagePreview.src = '';
+            imagePreview.style.display = 'none';
+            buttonGroup.style.display = 'none';
+            outputList.innerHTML = '';
+            resultContainer.style.display = 'none';
+            statusText.innerText = 'Tudo limpo! Pode enviar outra imagem.';
+            statusText.style.color = 'inherit';
+            imageInput.value = ''; 
+        });
+
+        // FUNÇÃO: Extrair
         extractBtn.addEventListener('click', async function() {
             extractBtn.disabled = true;
-            statusText.innerText = 'Lendo a imagem... Aguarde.';
+            statusText.innerText = 'Lendo a imagem... Aguarde (isso pode levar alguns segundos).';
+            statusText.style.color = 'inherit';
 
             try {
                 const result = await Tesseract.recognize(
@@ -253,8 +394,12 @@
                     });
                     resultContainer.style.display = 'flex';
                     statusText.innerText = 'Lista gerada com sucesso!';
+                    
+                    // Salva a lista gerada no navegador
+                    localStorage.setItem('savedListData', JSON.stringify(itensParaLista));
                 } else {
                     statusText.innerText = 'Nenhum item correspondente ao filtro foi encontrado na imagem.';
+                    localStorage.removeItem('savedListData'); // Se não achou nada, limpa dados velhos
                 }
 
             } catch (error) {
