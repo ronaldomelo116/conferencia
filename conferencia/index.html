@@ -3,53 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferência de Estoque</title>
+    <title>EstoqueTools - Início</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="img/favicon.png">
-    <link rel="icon" type="img/png" href="favicon.png">
-    <link rel="shortcut icon" type="img/png" href="img/favicon.png">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="img/favicon.png">
 
     <style>
         /* --- VARIÁVEIS DE TEMA --- */
         :root {
             --bg-container: #202124;
-            --bg-section: #303134;
-            --bg-input: #171717;
             --text-main: #e8eaed;
-            --text-title: #ffffff;
-            --text-muted: #9aa0a6;
             --border-color: #5f6368;
-            --list-header: #171717;
-            --badge-bg: #5f6368;
-            --badge-text: #ffffff;
-            --primary-color: #8ab4f8;
-            --highlight-bg: #444746;
             --btn-theme-bg: #303134;
             --btn-theme-text: #e8eaed;
-            --filtro-bg: #3c4043;
-            --filtro-text: #fbbc04;
+            --card-hover: #303134;
         }
 
         [data-theme="light"] {
             --bg-container: #ffffff;
-            --bg-section: #f8f9fa;
-            --bg-input: #ffffff;
             --text-main: #202124;
-            --text-title: #202124;
-            --text-muted: #5f6368;
             --border-color: #dadce0;
-            --list-header: #e8eaed;
-            --badge-bg: #dadce0;
-            --badge-text: #202124;
-            --primary-color: #1a73e8; 
-            --highlight-bg: #fff8e1;
             --btn-theme-bg: #ffffff;
             --btn-theme-text: #202124;
-            --filtro-bg: #fef7e0;
-            --filtro-text: #b06000;
+            --card-hover: #f8f9fa;
         }
 
         body {
@@ -60,10 +37,13 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            align-items: center;
             min-height: 95vh;
             transition: background-color 0.3s ease, color 0.3s ease;
+            box-sizing: border-box;
         }
 
+        /* Botão de Tema */
         .theme-toggle {
             position: fixed;
             top: 20px;
@@ -79,973 +59,185 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
             z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         .theme-toggle:hover {
             transform: scale(1.05);
         }
 
-        .container {
-            max-width: 1400px;
+        /* Logo Centralizada */
+        .logo-container {
+            margin: 40px 0 50px 0;
+            text-align: center;
             width: 100%;
-            margin: 0 auto;
-            background-color: var(--bg-container);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            flex: 1; 
-            box-sizing: border-box;
-            transition: background-color 0.3s ease;
-        }
-        h2 {
-            color: var(--text-title);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-top: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; 
-            gap: 15px;
-        }
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 15px; 
-            flex-wrap: wrap;
         }
         .logo-img {
-            height: 50px; 
-            width: auto;
-            border-radius: 8px; 
+            max-width: 350px;
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            transition: transform 0.3s ease;
+        }
+        .logo-img:hover {
+            transform: scale(1.03);
         }
 
-        .input-transacao {
-            background-color: var(--bg-input);
-            color: var(--text-main);
-            border: 2px solid var(--primary-color);
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 16px;
-            outline: none;
-            width: 250px;
-            transition: box-shadow 0.2s;
-        }
-        .input-transacao:focus {
-            box-shadow: 0 0 5px rgba(138, 180, 248, 0.5);
-        }
-        
-        .painel-contagem {
-            background-color: var(--bg-section);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 20px;
-            border: 2px solid var(--primary-color);
-            color: var(--text-title);
-            white-space: nowrap;
-        }
-        .painel-contagem span {
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 24px;
-        }
-        .upload-section {
-            background-color: var(--bg-section);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-        .upload-controls {
+        /* Grid de Ferramentas */
+        .tools-grid {
             display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 10px;
+            gap: 40px;
+            justify-content: center;
             flex-wrap: wrap;
-        }
-        input[type="file"] {
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-        .btn-limpar {
-            background-color: #c5221f;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-limpar:hover {
-            background-color: #a51b19;
-        }
-        .btn-limpar:disabled {
-            background-color: var(--badge-bg);
-            color: var(--text-muted);
-            cursor: not-allowed;
+            max-width: 1000px;
+            width: 100%;
+            flex: 1;
         }
 
-        .btn-pdf {
-            background-color: #137333;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-pdf:hover {
-            background-color: #0d5022;
-        }
-        .btn-pdf:disabled {
-            background-color: var(--badge-bg);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-        
-        .paste-area {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--bg-input);
+        /* Cartões (Quadrados Clicáveis) */
+        .tool-card {
+            background-color: var(--bg-container);
             border: 1px solid var(--border-color);
+            border-radius: 16px;
+            text-decoration: none;
             color: var(--text-main);
-            border-radius: 6px;
-            margin-top: 15px;
-            box-sizing: border-box;
-            font-family: monospace;
-            resize: vertical;
-            min-height: 80px;
-        }
-        .paste-area:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-        .btn-carregar {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: filter 0.2s;
-            margin-top: 10px;
-        }
-        .btn-carregar:hover {
-            filter: brightness(1.1);
+            width: 320px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
         }
 
-        .search-bar {
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.6);
+            background-color: var(--card-hover);
+        }
+
+        /* Miniatura da Página */
+        .card-thumb {
             width: 100%;
-            padding: 15px;
-            font-size: 24px;
-            background-color: var(--bg-input);
-            border: 2px solid var(--primary-color);
-            color: var(--text-main);
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            outline: none;
-        }
-        .search-bar:focus {
-            box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
+            height: 200px;
+            background-color: #e8eaed; /* Cor de fundo caso a imagem demore a carregar */
+            border-bottom: 2px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
         }
         
-        #alert-box {
-            display: none;
-            background-color: #fce8e6;
-            color: #c5221f;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #c5221f;
+        .card-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Preenche o quadrado mantendo a proporção */
+            object-position: top; /* Foca no topo da página capturada */
+            transition: transform 0.4s ease;
         }
-        #alert-warning {
-            display: none;
-            background-color: #fef7e0;
-            color: #b06000;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #fbbc04;
+
+        .tool-card:hover .card-thumb img {
+            transform: scale(1.05); /* Efeito de zoom leve ao passar o mouse */
         }
-        
-        #info-filtro {
-            display: none;
-            padding: 15px;
+
+        /* Título do Cartão */
+        .card-title {
+            padding: 20px;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 6px solid transparent;
-        }
-        .info-filtro-encontrado {
-            background-color: var(--filtro-bg) !important;
-            color: var(--filtro-text) !important;
-            border-left-color: #fbbc04 !important;
-        }
-        .info-filtro-erro {
-            background-color: #fce8e6 !important;
-            color: #c5221f !important;
-            border-left-color: #c5221f !important;
-        }
-
-        .tabela-container {
-            background-color: var(--bg-section);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        .list-header {
-            display: flex;
-            background-color: var(--list-header);
-            padding: 15px;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            user-select: none;
-        }
-
-        /* --- ESTILOS DE ORDENAÇÃO (FILTRO DE COLUNAS) --- */
-        .sortable {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s;
-        }
-        .sortable:hover {
-            color: var(--text-title);
-        }
-        .sort-icon {
-            font-size: 10px;
-            opacity: 0.4;
-        }
-        .sortable.active .sort-icon {
-            opacity: 1;
-            color: var(--primary-color);
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 600px;
-            overflow-y: auto;
-            background-color: transparent;
-        }
-        li {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            display: flex; 
-            align-items: center;
-            transition: background-color 0.2s ease;
-        }
-        li:last-child {
-            border-bottom: none;
-        }
-        .mensagem-vazia {
-            color: var(--text-muted);
             text-align: center;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            width: 100%;
-        }
-        .grid-row {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 0.8fr 1fr 4fr 1.5fr 1.5fr 1fr 0.5fr 1fr;
-            gap: 15px;
-            align-items: center;
-            padding-right: 15px;
-        }
-        .col-text {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .col-ns {
-            color: var(--primary-color);
-            font-weight: bold;
+            min-height: 60px;
         }
 
-        .destaque-busca {
-            background-color: var(--highlight-bg) !important;
-            border-left: 8px solid #fbbc04;
-        }
-        .verificado {
-            background-color: #137333 !important;
-            color: #fff;
-            border-left: 8px solid #137333;
-        }
-        .verificado .col-text, .verificado .col-ns {
-            color: #fff !important;
-        }
-        
-        @keyframes piscarAmarelo {
-            0% { background-color: #137333; border-left-color: #137333; }
-            50% { background-color: #b06000; border-left-color: #fbbc04; }
-            100% { background-color: #137333; border-left-color: #137333; }
-        }
-        .piscar-aviso {
-            animation: piscarAmarelo 0.8s infinite !important;
-        }
-
-        .status-container {
-            width: 80px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-        }
-        .status-badge {
-            font-size: 13px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            background-color: var(--badge-bg);
-            color: var(--badge-text);
-            font-weight: bold;
-            white-space: nowrap;
-            display: inline-block;
-        }
-        .verificado .status-badge {
-            background-color: #ceead6;
-            color: #137333;
-        }
-
+        /* Rodapé */
         .footer {
-            max-width: 1400px;
-            width: 100%;
-            margin: 20px auto 0 auto;
-            background-color: var(--bg-container);
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            margin-top: 50px;
             text-align: center;
-            color: var(--text-muted);
+            color: #ffffff;
             font-size: 14px;
             line-height: 1.6;
-            box-sizing: border-box;
-            transition: background-color 0.3s ease;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 800px;
         }
         .footer p {
             margin: 5px 0;
         }
-        .footer-lembrete {
-            color: #fbbc04; 
-            font-weight: bold;
-            margin-top: 10px;
-        }
         .footer a {
-            color: var(--primary-color); 
-            text-decoration: none;
+            color: #ffffff;
             font-weight: bold;
+            text-decoration: underline;
         }
         .footer a:hover {
-            text-decoration: underline;
+            color: #333333;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid {
+                gap: 25px;
+            }
+            .tool-card {
+                width: 100%;
+                max-width: 350px;
+            }
         }
     </style>
 </head>
 <body>
 
-<button id="themeToggleBtn" class="theme-toggle">☀️ Modo Claro</button>
+    <button id="themeToggleBtn" class="theme-toggle">☀️ Modo Claro</button>
 
-<div class="container">
-    <h2>
-        <div class="header-title">
-            <img src="img/favicon.png" alt="Logo Estoque" class="logo-img">
-            Conferência de Transação
-            <input type="text" id="inputTransacao" class="input-transacao" placeholder="código da transação" autocomplete="off">
-        </div>
-        <div class="painel-contagem">
-            Conferidos: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
-        </div>
-    </h2>
-    
-    <div class="upload-section">
-        <label>1. Envie o arquivo da tabela OU cole os dados diretamente abaixo:</label>
-        
-        <div class="upload-controls">
-            <input type="file" id="txtFile" accept=".txt, .csv">
-            <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
-            <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
-        </div>
-        
-        <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
-        <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
+    <div class="logo-container">
+        <img src="img/logoestoquetools.png" alt="Logo EstoqueTools" class="logo-img">
     </div>
 
-    <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
-
-    <div id="alert-box">❌ ALERTA: item não encontrado na lista</div>
-    <div id="alert-warning">⚠️ ATENÇÃO: Item Verificado (Este equipamento já foi conferido).</div>
-    
-    <div id="info-filtro">🔍 0 itens encontrados.</div>
-
-    <div class="tabela-container">
-        <div class="list-header" id="listHeader" style="display: none;">
-            <div class="grid-row">
-                <div class="sortable" data-col="0">Código <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="1">Data <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="2">Nome <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="3">Número de Série <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="4">NS Interno <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="5">Estado <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="6">Qtd <span class="sort-icon">↕</span></div>
-                <div class="sortable" data-col="7">Funcionário <span class="sort-icon">↕</span></div>
+    <div class="tools-grid">
+        <a href="https://estoquetools.netlify.app/conferencia" class="tool-card">
+            <div class="card-thumb">
+                <img src="img/thumb-conferencia.png" alt="Miniatura Conferência de Transações">
             </div>
-            <div class="status-container sortable" data-col="8" style="gap: 5px;">
-                Status <span class="sort-icon">↕</span>
+            <div class="card-title">
+                Conferência de Transações
             </div>
-        </div>
+        </a>
 
-        <ul id="nsList">
-            <li id="mensagemVazia" class="mensagem-vazia">
-                Os itens da transação aparecerão aqui organizados em colunas.
-            </li>
-        </ul>
+        <a href="https://estoquetools.netlify.app/extratordeimagens" class="tool-card">
+            <div class="card-thumb">
+                <img src="img/thumb-extrator.png" alt="Miniatura Extrator Inteligente de Imagens">
+            </div>
+            <div class="card-title">
+                Extrator Inteligente de Imagens
+            </div>
+        </a>
     </div>
-</div>
 
-<div class="footer">
-    <p>&copy; 2026 Conferência de Estoque. Todos os direitos reservados. Criado por Ronaldo Melo</p>
-    <p class="footer-lembrete">
-        Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail 
-        <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a>
-    </p>
-</div>
+    <div class="footer">
+        <p>&copy; 2026 estoquetools. Todos os direitos reservados. Criado por Ronaldo Melo</p>
+        <p>Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a></p>
+    </div>
 
-<script>
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    atualizarBotaoTema(savedTheme);
-
-    themeToggleBtn.addEventListener('click', () => {
-        let currentTheme = document.documentElement.getAttribute('data-theme');
-        let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    <script>
+        // Sincronização do tema Dark/Light integrada com as outras páginas
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
         
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('themeBrisanet', newTheme);
-        atualizarBotaoTema(newTheme);
-    });
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        atualizarBotaoTema(savedTheme);
 
-    function atualizarBotaoTema(theme) {
-        if (theme === 'light') {
-            themeToggleBtn.innerHTML = '🌙 Modo Escuro';
-        } else {
-            themeToggleBtn.innerHTML = '☀️ Modo Claro';
-        }
-    }
-
-    const fileInput = document.getElementById('txtFile');
-    const btnLimpar = document.getElementById('btnLimpar');
-    const btnBaixarPDF = document.getElementById('btnBaixarPDF');
-    const searchBar = document.getElementById('searchBar');
-    const inputTransacao = document.getElementById('inputTransacao'); 
-    const nsList = document.getElementById('nsList');
-    const listHeader = document.getElementById('listHeader');
-    const alertBox = document.getElementById('alert-box');
-    const alertWarning = document.getElementById('alert-warning');
-    const infoFiltro = document.getElementById('info-filtro');
-    const spanBipados = document.getElementById('qtdBipados');
-    const spanTotal = document.getElementById('qtdTotal');
-    
-    const pasteArea = document.getElementById('pasteArea');
-    const btnCarregarTexto = document.getElementById('btnCarregarTexto');
-
-    let totalItens = 0;
-    let itensBipados = 0;
-    let typingTimer;
-    const tempoDeEspera = 150; 
-    
-    let estoqueDados = []; 
-
-    // VARIÁVEIS DE ORDENAÇÃO (FILTRO)
-    let currentSortColumn = -1;
-    let currentSortDirection = 'asc';
-
-    window.onload = function() {
-        const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
-        if (dadosSalvos) {
-            estoqueDados = JSON.parse(dadosSalvos);
-            if (estoqueDados.length > 0) {
-                renderizarDaMemoria();
-                btnLimpar.disabled = false;
-                btnBaixarPDF.disabled = false;
-            }
-        }
-        
-        const transacaoSalva = localStorage.getItem('codigoTransacaoBrisanet');
-        if (transacaoSalva) {
-            inputTransacao.value = transacaoSalva;
-        }
-    };
-
-    function salvarNaMemoria() {
-        localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
-    }
-
-    inputTransacao.addEventListener('input', function() {
-        localStorage.setItem('codigoTransacaoBrisanet', this.value.trim());
-    });
-
-    btnLimpar.addEventListener('click', function() {
-        nsList.innerHTML = '<li id="mensagemVazia" class="mensagem-vazia">Os itens da transação aparecerão aqui organizados em colunas.</li>';
-        listHeader.style.display = 'none'; 
-        
-        totalItens = 0;
-        itensBipados = 0;
-        spanTotal.textContent = totalItens;
-        spanBipados.textContent = itensBipados;
-        spanBipados.style.color = 'var(--primary-color)'; 
-        
-        fileInput.value = '';
-        pasteArea.value = ''; 
-        searchBar.value = '';
-        searchBar.disabled = true;
-        btnLimpar.disabled = true;
-        btnBaixarPDF.disabled = true; 
-        
-        inputTransacao.value = '';
-        localStorage.removeItem('codigoTransacaoBrisanet');
-        
-        alertBox.style.display = 'none';
-        alertWarning.style.display = 'none';
-        infoFiltro.style.display = 'none';
-        
-        // Reseta os ícones de ordenação
-        document.querySelectorAll('.sortable').forEach(h => {
-            h.classList.remove('active');
-            h.querySelector('.sort-icon').textContent = '↕';
-        });
-        currentSortColumn = -1;
-
-        estoqueDados = [];
-        localStorage.removeItem('dadosConferenciaBrisanet');
-    });
-
-    function processarConteudo(content) {
-        let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
-        
-        if (linhas.length > 0 && linhas[0].toLowerCase().includes('código')) {
-            linhas.shift(); 
-        }
-
-        let novosDados = linhas.map(linha => {
-            return {
-                linhaOriginal: linha.trim(),
-                linhaUpper: linha.trim().toUpperCase(),
-                verificado: false,
-                dataConferencia: null
-            };
-        });
-
-        estoqueDados = estoqueDados.concat(novosDados);
-
-        salvarNaMemoria(); 
-        renderizarDaMemoria(); 
-        btnLimpar.disabled = false;
-        btnBaixarPDF.disabled = false; 
-        
-        pasteArea.value = '';
-    }
-
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            processarConteudo(e.target.result);
-            fileInput.value = ''; 
-        };
-        reader.readAsText(file);
-    });
-
-    btnCarregarTexto.addEventListener('click', function() {
-        const textoColado = pasteArea.value;
-        if (!textoColado.trim()) {
-            alert('Por favor, cole os dados da tabela na caixa de texto primeiro!');
-            pasteArea.focus();
-            return;
-        }
-        processarConteudo(textoColado);
-    });
-
-    // --- FUNÇÃO DE CLIQUE PARA ORDENAÇÃO ---
-    document.querySelectorAll('.sortable').forEach(header => {
-        header.addEventListener('click', () => {
-            const colIndex = parseInt(header.dataset.col);
+        themeToggleBtn.addEventListener('click', () => {
+            let currentTheme = document.documentElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            // Alterna a direção se clicar na mesma coluna
-            if (currentSortColumn === colIndex) {
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('themeBrisanet', newTheme);
+            atualizarBotaoTema(newTheme);
+        });
+
+        function atualizarBotaoTema(theme) {
+            if (theme === 'light') {
+                themeToggleBtn.innerHTML = '🌙 Modo Escuro';
             } else {
-                currentSortColumn = colIndex;
-                currentSortDirection = 'asc';
+                themeToggleBtn.innerHTML = '☀️ Modo Claro';
             }
-
-            // Atualiza os ícones visualmente
-            document.querySelectorAll('.sortable').forEach(h => {
-                h.classList.remove('active');
-                h.querySelector('.sort-icon').textContent = '↕';
-            });
-            header.classList.add('active');
-            header.querySelector('.sort-icon').textContent = currentSortDirection === 'asc' ? '▲' : '▼';
-
-            renderizarDaMemoria();
-        });
-    });
-
-    // Função auxiliar para capturar o valor limpo de uma coluna específica
-    function getColValue(item, colIndex) {
-        if (colIndex === 8) return item.verificado ? 'OK' : 'Pendente';
-
-        let limpo = item.linhaOriginal.replace(/"/g, ''); 
-        let separador = '\t';
-        if (limpo.includes('\t')) separador = '\t';
-        else if (limpo.includes(';')) separador = ';';
-        else if (limpo.includes(',')) separador = ',';
-
-        let colunas = limpo.split(separador);
-        let val = colunas[colIndex] ? colunas[colIndex].trim() : '-';
-
-        if (colIndex === 1 && item.dataConferencia) {
-            val = item.dataConferencia.replace(/<[^>]*>?/gm, ' '); // Remove HTML pra poder organizar direito
         }
-        return val;
-    }
-
-    btnBaixarPDF.addEventListener('click', function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('landscape'); 
-        
-        doc.setFontSize(16);
-        
-        const codTransacao = inputTransacao.value.trim();
-        let tituloPDF = "Relatório de Conferência de Estoque";
-        
-        if (codTransacao) {
-            tituloPDF += ` - Transação: ${codTransacao}`;
-        }
-        doc.text(tituloPDF, 14, 15);
-        
-        doc.setFontSize(11);
-        doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
-
-        const tableColumn = ["Código", "Data", "Nome do Equipamento", "Nº Série", "Nº Série Interno", "Estado", "Qtd", "Funcionário", "Status"];
-        const tableRows = [];
-
-        estoqueDados.forEach(item => {
-            let limpo = item.linhaOriginal.replace(/"/g, ''); 
-            let separador = '\t';
-            if (limpo.includes('\t')) separador = '\t';
-            else if (limpo.includes(';')) separador = ';';
-            else if (limpo.includes(',')) separador = ',';
-
-            let colunas = limpo.split(separador);
-            
-            if (item.dataConferencia) {
-                colunas[1] = item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '');
-            }
-            
-            let rowData = [];
-            for(let i = 0; i < 8; i++) {
-                rowData.push(colunas[i] ? colunas[i].trim() : '-');
-            }
-            
-            rowData.push(item.verificado ? 'OK' : 'Pendente');
-            tableRows.push(rowData);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 28,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [243, 112, 33] },
-            didParseCell: function(data) {
-                if (data.column.index === 8) {
-                    if (data.cell.raw === 'OK') {
-                        data.cell.styles.textColor = [19, 115, 51]; 
-                        data.cell.styles.fontStyle = 'bold';
-                    } else {
-                        data.cell.styles.textColor = [197, 34, 31]; 
-                        data.cell.styles.fontStyle = 'bold';
-                    }
-                }
-            }
-        });
-
-        const hoje = new Date();
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const ano = hoje.getFullYear();
-        
-        let fileName = codTransacao 
-            ? `Transacao_${codTransacao}_${dia}-${mes}-${ano}.pdf` 
-            : `Relatorio_Estoque_${dia}-${mes}-${ano}.pdf`;
-            
-        doc.save(fileName);
-    });
-
-    function renderizarDaMemoria() {
-        nsList.innerHTML = ''; 
-        listHeader.style.display = 'flex'; 
-        
-        totalItens = estoqueDados.length;
-        itensBipados = estoqueDados.filter(item => item.verificado).length; 
-        
-        spanTotal.textContent = totalItens;
-        spanBipados.textContent = itensBipados;
-        spanBipados.style.color = (itensBipados === totalItens && totalItens > 0) ? '#137333' : 'var(--primary-color)'; 
-
-        // ORDENA O ARRAY ANTES DE DESENHAR NA TELA
-        if (currentSortColumn !== -1) {
-            estoqueDados.sort((a, b) => {
-                let valA = getColValue(a, currentSortColumn);
-                let valB = getColValue(b, currentSortColumn);
-
-                // O parâmetro numeric garante que "10" seja maior que "2"
-                if (currentSortDirection === 'asc') {
-                    return valA.localeCompare(valB, undefined, {numeric: true, sensitivity: 'base'});
-                } else {
-                    return valB.localeCompare(valA, undefined, {numeric: true, sensitivity: 'base'});
-                }
-            });
-            // Opcional: Descomente a linha abaixo se quiser que a ordenação fique salva mesmo fechando o navegador
-            // salvarNaMemoria();
-        }
-
-        estoqueDados.forEach((item, index) => {
-            let limpo = item.linhaOriginal.replace(/"/g, ''); 
-            
-            let separador = '\t';
-            if (limpo.includes('\t')) separador = '\t';
-            else if (limpo.includes(';')) separador = ';';
-            else if (limpo.includes(',')) separador = ',';
-
-            let colunas = limpo.split(separador);
-
-            if (item.dataConferencia) {
-                colunas[1] = item.dataConferencia;
-            }
-
-            let colsHTML = '';
-            for(let i = 0; i < 8; i++) {
-                let valor = colunas[i] ? colunas[i].trim() : '-';
-                
-                if(i === 1) { 
-                    let titleAjustado = valor.replace(/<[^>]*>?/gm, ' ');
-                    colsHTML += `<div class="col-text" style="white-space: normal; line-height: 1.3; font-size: 13px;" title="${titleAjustado}">${valor}</div>`;
-                } else if(i === 3) { 
-                    colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
-                } else { 
-                    colsHTML += `<div class="col-text" title="${valor}">${valor}</div>`;
-                }
-            }
-
-            const li = document.createElement('li');
-            li.dataset.index = index; 
-            li.dataset.linhaRaw = item.linhaUpper; 
-            
-            if (item.verificado) {
-                li.classList.add('verificado');
-                li.innerHTML = `
-                    <div class="grid-row">${colsHTML}</div>
-                    <div class="status-container">
-                        <span class="status-badge">OK</span>
-                    </div>
-                `;
-            } else {
-                li.innerHTML = `
-                    <div class="grid-row">${colsHTML}</div>
-                    <div class="status-container">
-                        <span class="status-badge">Pendente</span>
-                    </div>
-                `;
-            }
-            nsList.appendChild(li);
-        });
-
-        searchBar.disabled = false;
-        searchBar.focus();
-
-        // Se existir um filtro ativo na barra de busca, aplica ele novamente após ordenar
-        if (searchBar.value.trim() !== '') {
-            searchBar.dispatchEvent(new Event('input')); 
-        }
-    }
-
-    searchBar.addEventListener('input', function() {
-        clearTimeout(typingTimer); 
-        const termo = this.value.trim().toUpperCase();
-        const items = nsList.querySelectorAll('li');
-        
-        alertBox.style.display = 'none';
-        alertWarning.style.display = 'none';
-        infoFiltro.style.display = 'none';
-
-        if (!termo) {
-            items.forEach(li => {
-                li.classList.remove('destaque-busca', 'piscar-aviso');
-                if (li.id !== 'mensagemVazia') li.style.display = 'flex'; 
-            });
-            return;
-        }
-
-        let pendentes = [];
-        let jaVerificados = [];
-        let totalEncontrados = 0;
-
-        items.forEach(li => {
-            li.classList.remove('destaque-busca', 'piscar-aviso');
-
-            if (li.dataset.linhaRaw.includes(termo)) {
-                totalEncontrados++;
-                li.style.display = 'flex'; 
-                
-                if (!li.classList.contains('verificado')) {
-                    pendentes.push(li);
-                    li.classList.add('destaque-busca'); 
-                } else {
-                    jaVerificados.push(li);
-                }
-            } else {
-                li.style.display = 'none';
-            }
-        });
-
-        if (totalEncontrados > 0) {
-            infoFiltro.innerHTML = `🔍 Mostrando <strong>${totalEncontrados}</strong> item(ns) encontrado(s) com "${termo}".`;
-            infoFiltro.style.display = 'block';
-            infoFiltro.className = 'info-filtro-encontrado'; 
-        } else {
-            infoFiltro.innerHTML = `⚠️ Nenhum item correspondente para "<strong>${termo}</strong>".`;
-            infoFiltro.style.display = 'block';
-            infoFiltro.className = 'info-filtro-erro'; 
-        }
-
-        typingTimer = setTimeout(() => {
-            const pareceCodigoBarras = !termo.includes(' ') && termo.length >= 4;
-
-            if (pareceCodigoBarras) {
-                if (pendentes.length === 1) {
-                    confirmarItem(pendentes[0], pendentes[0].dataset.index);
-                } 
-                else if (pendentes.length === 0 && jaVerificados.length === 1) {
-                    dispararAvisoVerificado(jaVerificados[0]);
-                }
-            }
-        }, tempoDeEspera);
-    });
-
-    searchBar.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            clearTimeout(typingTimer);
-            const termo = this.value.trim().toUpperCase();
-            if (!termo) return;
-
-            const items = nsList.querySelectorAll('li');
-            let matchPendente = null;
-            let matchVerificado = null;
-
-            items.forEach(li => {
-                if (li.dataset.linhaRaw.includes(termo)) {
-                    if (!li.classList.contains('verificado')) {
-                        if (!matchPendente) matchPendente = li; 
-                    } else {
-                        if (!matchVerificado) matchVerificado = li;
-                    }
-                }
-            });
-
-            if (matchPendente) confirmarItem(matchPendente, matchPendente.dataset.index);
-            else if (matchVerificado) dispararAvisoVerificado(matchVerificado);
-            else dispararErro(); 
-        }
-    });
-
-    function confirmarItem(li, index) {
-        li.classList.remove('destaque-busca');
-        li.classList.add('verificado');
-        li.querySelector('.status-badge').textContent = 'OK';
-        
-        const dataAtual = new Date();
-        const dataStr = dataAtual.toLocaleDateString('pt-BR');
-        const horaStr = dataAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const dataFormatada = `${dataStr}<br><span style="font-size: 0.9em; opacity: 0.85;">${horaStr}</span>`;
-        
-        estoqueDados[index].verificado = true;
-        estoqueDados[index].dataConferencia = dataFormatada;
-        salvarNaMemoria();
-
-        const colunasDOM = li.querySelectorAll('.col-text');
-        if (colunasDOM.length > 1) {
-            colunasDOM[1].innerHTML = dataFormatada;
-            colunasDOM[1].title = `${dataStr} as ${horaStr}`;
-        }
-
-        itensBipados++;
-        spanBipados.textContent = itensBipados;
-        
-        if (itensBipados === totalItens) {
-            spanBipados.style.color = '#137333';
-        }
-        
-        limparBarraERestaurarLista();
-    }
-
-    function dispararAvisoVerificado(li) {
-        li.style.display = 'flex';
-        li.classList.add('piscar-aviso');
-        li.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        alertWarning.style.display = 'block';
-        infoFiltro.style.display = 'none'; 
-        
-        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
-        audio.play().catch(() => {}); 
-        
-        searchBar.select();
-    }
-
-    function dispararErro() {
-        alertBox.style.display = 'block';
-        infoFiltro.style.display = 'none';
-        
-        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
-        audio.play().catch(() => {}); 
-        
-        setTimeout(() => {
-            alertBox.style.display = 'none';
-        }, 3000);
-        
-        searchBar.select(); 
-    }
-
-    function limparBarraERestaurarLista() {
-        searchBar.value = '';
-        searchBar.focus();
-        searchBar.dispatchEvent(new Event('input')); 
-    }
-</script>
-
+    </script>
 </body>
 </html>
