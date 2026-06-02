@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferência de Estoque</title>
+    <title>Conferência de Transações</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="img/favicon.png">
     <link rel="icon" type="img/png" href="favicon.png">
@@ -494,7 +494,7 @@
     <a href="https://estoquetools.netlify.app/" title="Voltar à Página Inicial">
         <img src="img/favicon.png" alt="Logo Estoque" class="logo-img">
     </a>
-    <h1>Conferência de Transação</h1>
+    <h1>Conferência de Transações</h1>
 </div>
 
 <div class="container">
@@ -763,7 +763,7 @@
         doc.setFontSize(16);
         
         const codTransacao = inputTransacao.value.trim();
-        let tituloPDF = "Relatório de Conferência de Estoque";
+        let tituloPDF = "Relatório de Conferência de transações";
         
         if (codTransacao) {
             tituloPDF += ` - Transação: ${codTransacao}`;
