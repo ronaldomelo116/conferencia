@@ -318,7 +318,29 @@
             font-weight: bold;
             color: var(--text-muted);
             text-transform: uppercase;
+            user-select: none;
         }
+
+        /* --- ESTILOS DE ORDENAÇÃO (FILTRO DE COLUNAS) --- */
+        .sortable {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .sortable:hover {
+            color: var(--text-title);
+        }
+        .sort-icon {
+            font-size: 10px;
+            opacity: 0.4;
+        }
+        .sortable.active .sort-icon {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
         ul {
             list-style: none;
             padding: 0;
@@ -347,7 +369,7 @@
         .grid-row {
             flex: 1;
             display: grid;
-            grid-template-columns: 0.8fr 0.8fr 4fr 1.5fr 1.5fr 1fr 0.5fr 1fr;
+            grid-template-columns: 0.8fr 1fr 4fr 1.5fr 1.5fr 1fr 0.5fr 1fr;
             gap: 15px;
             align-items: center;
             padding-right: 15px;
@@ -386,7 +408,9 @@
 
         .status-container {
             width: 80px;
-            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
         }
         .status-badge {
             font-size: 13px;
@@ -475,16 +499,18 @@
     <div class="tabela-container">
         <div class="list-header" id="listHeader" style="display: none;">
             <div class="grid-row">
-                <div>Código</div>
-                <div>Data</div>
-                <div>Nome</div>
-                <div>Número de Série</div>
-                <div>NS Interno</div>
-                <div>Estado</div>
-                <div>Qtd</div>
-                <div>Funcionário</div>
+                <div class="sortable" data-col="0">Código <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="1">Data <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="2">Nome <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="3">Número de Série <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="4">NS Interno <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="5">Estado <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="6">Qtd <span class="sort-icon">↕</span></div>
+                <div class="sortable" data-col="7">Funcionário <span class="sort-icon">↕</span></div>
             </div>
-            <div class="status-container">Status</div>
+            <div class="status-container sortable" data-col="8" style="gap: 5px;">
+                Status <span class="sort-icon">↕</span>
+            </div>
         </div>
 
         <ul id="nsList">
@@ -549,6 +575,10 @@
     
     let estoqueDados = []; 
 
+    // VARIÁVEIS DE ORDENAÇÃO (FILTRO)
+    let currentSortColumn = -1;
+    let currentSortDirection = 'asc';
+
     window.onload = function() {
         const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
         if (dadosSalvos) {
@@ -598,6 +628,13 @@
         alertWarning.style.display = 'none';
         infoFiltro.style.display = 'none';
         
+        // Reseta os ícones de ordenação
+        document.querySelectorAll('.sortable').forEach(h => {
+            h.classList.remove('active');
+            h.querySelector('.sort-icon').textContent = '↕';
+        });
+        currentSortColumn = -1;
+
         estoqueDados = [];
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
@@ -650,6 +687,50 @@
         processarConteudo(textoColado);
     });
 
+    // --- FUNÇÃO DE CLIQUE PARA ORDENAÇÃO ---
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', () => {
+            const colIndex = parseInt(header.dataset.col);
+            
+            // Alterna a direção se clicar na mesma coluna
+            if (currentSortColumn === colIndex) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = colIndex;
+                currentSortDirection = 'asc';
+            }
+
+            // Atualiza os ícones visualmente
+            document.querySelectorAll('.sortable').forEach(h => {
+                h.classList.remove('active');
+                h.querySelector('.sort-icon').textContent = '↕';
+            });
+            header.classList.add('active');
+            header.querySelector('.sort-icon').textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+
+            renderizarDaMemoria();
+        });
+    });
+
+    // Função auxiliar para capturar o valor limpo de uma coluna específica
+    function getColValue(item, colIndex) {
+        if (colIndex === 8) return item.verificado ? 'OK' : 'Pendente';
+
+        let limpo = item.linhaOriginal.replace(/"/g, ''); 
+        let separador = '\t';
+        if (limpo.includes('\t')) separador = '\t';
+        else if (limpo.includes(';')) separador = ';';
+        else if (limpo.includes(',')) separador = ',';
+
+        let colunas = limpo.split(separador);
+        let val = colunas[colIndex] ? colunas[colIndex].trim() : '-';
+
+        if (colIndex === 1 && item.dataConferencia) {
+            val = item.dataConferencia.replace(/<[^>]*>?/gm, ' '); // Remove HTML pra poder organizar direito
+        }
+        return val;
+    }
+
     btnBaixarPDF.addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('landscape'); 
@@ -679,7 +760,6 @@
 
             let colunas = limpo.split(separador);
             
-            // Tratamento da Data no PDF (Transforma o <br> em uma quebra de linha real no PDF)
             if (item.dataConferencia) {
                 colunas[1] = item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '');
             }
@@ -735,6 +815,23 @@
         spanBipados.textContent = itensBipados;
         spanBipados.style.color = (itensBipados === totalItens && totalItens > 0) ? '#137333' : 'var(--primary-color)'; 
 
+        // ORDENA O ARRAY ANTES DE DESENHAR NA TELA
+        if (currentSortColumn !== -1) {
+            estoqueDados.sort((a, b) => {
+                let valA = getColValue(a, currentSortColumn);
+                let valB = getColValue(b, currentSortColumn);
+
+                // O parâmetro numeric garante que "10" seja maior que "2"
+                if (currentSortDirection === 'asc') {
+                    return valA.localeCompare(valB, undefined, {numeric: true, sensitivity: 'base'});
+                } else {
+                    return valB.localeCompare(valA, undefined, {numeric: true, sensitivity: 'base'});
+                }
+            });
+            // Opcional: Descomente a linha abaixo se quiser que a ordenação fique salva mesmo fechando o navegador
+            // salvarNaMemoria();
+        }
+
         estoqueDados.forEach((item, index) => {
             let limpo = item.linhaOriginal.replace(/"/g, ''); 
             
@@ -745,7 +842,6 @@
 
             let colunas = limpo.split(separador);
 
-            // Injeta a data com HTML na visualização em tela
             if (item.dataConferencia) {
                 colunas[1] = item.dataConferencia;
             }
@@ -754,15 +850,12 @@
             for(let i = 0; i < 8; i++) {
                 let valor = colunas[i] ? colunas[i].trim() : '-';
                 
-                // Aplica regras específicas dependendo da coluna
-                if(i === 1) { // Coluna Data
-                    // Remove o HTML do title para não ficar feio ao passar o mouse
+                if(i === 1) { 
                     let titleAjustado = valor.replace(/<[^>]*>?/gm, ' ');
-                    // white-space: normal permite que a quebra de linha aconteça
                     colsHTML += `<div class="col-text" style="white-space: normal; line-height: 1.3; font-size: 13px;" title="${titleAjustado}">${valor}</div>`;
-                } else if(i === 3) { // Coluna NS
+                } else if(i === 3) { 
                     colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
-                } else { // Outras Colunas
+                } else { 
                     colsHTML += `<div class="col-text" title="${valor}">${valor}</div>`;
                 }
             }
@@ -792,6 +885,11 @@
 
         searchBar.disabled = false;
         searchBar.focus();
+
+        // Se existir um filtro ativo na barra de busca, aplica ele novamente após ordenar
+        if (searchBar.value.trim() !== '') {
+            searchBar.dispatchEvent(new Event('input')); 
+        }
     }
 
     searchBar.addEventListener('input', function() {
@@ -889,18 +987,15 @@
         li.classList.add('verificado');
         li.querySelector('.status-badge').textContent = 'OK';
         
-        // --- FORMATA A DATA E HORA COM QUEBRA DE LINHA HTML ---
         const dataAtual = new Date();
         const dataStr = dataAtual.toLocaleDateString('pt-BR');
         const horaStr = dataAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        // O span deixa a hora com uma fonte um pouquinho menor e mais suave
         const dataFormatada = `${dataStr}<br><span style="font-size: 0.9em; opacity: 0.85;">${horaStr}</span>`;
         
         estoqueDados[index].verificado = true;
         estoqueDados[index].dataConferencia = dataFormatada;
         salvarNaMemoria();
 
-        // Atualiza na tela instantaneamente
         const colunasDOM = li.querySelectorAll('.col-text');
         if (colunasDOM.length > 1) {
             colunasDOM[1].innerHTML = dataFormatada;
