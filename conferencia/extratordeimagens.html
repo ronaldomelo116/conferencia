@@ -74,7 +74,6 @@
             color: #F37021;
         }
 
-        /* Título alinhado com a logo */
         h2 { 
             display: flex;
             align-items: center;
@@ -94,7 +93,7 @@
         }
 
         .title-logo {
-            height: 45px; /* Tamanho da logo */
+            height: 45px; 
             width: auto;
             border: none;
             margin-top: 0;
@@ -102,7 +101,7 @@
         }
 
         .title-logo:hover {
-            transform: scale(1.1); /* Efeito de zoom ao passar o mouse */
+            transform: scale(1.1); 
         }
         
         .main-wrapper {
@@ -154,6 +153,59 @@
             border-radius: 5px;
             border: 1px solid var(--input-border);
             margin-top: 10px;
+        }
+
+        /* Dica visual para a imagem clicável */
+        #imagePreview {
+            cursor: zoom-in;
+            transition: transform 0.2s;
+        }
+        #imagePreview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Estilos do Modal de Zoom */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            padding-top: 40px; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: zoom-out;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #F37021;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .button-group {
@@ -247,7 +299,7 @@
                 <option value="letras">Extrair Apenas Palavras/Textos</option>
             </select>
 
-            <img id="imagePreview" style="display:none;" alt="Preview da Imagem">
+            <img id="imagePreview" style="display:none;" alt="Preview da Imagem" crossorigin="anonymous" title="Clique para ampliar">
             
             <div class="button-group" id="buttonGroup" style="display:none;">
                 <button id="extractBtn" class="action-btn">Extrair e Gerar Lista</button>
@@ -261,6 +313,11 @@
             <h3>Lista Gerada:</h3>
             <ul id="outputList"></ul>
         </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="imgZoomed">
     </div>
 
     <footer>
@@ -308,7 +365,23 @@
         const outputList = document.getElementById('outputList');
         const resultContainer = document.getElementById('resultContainer');
 
-        // FUNÇÃO: Carregar imagem e lista salvas ao abrir a página
+        // ==== LÓGICA DO ZOOM (MODAL) ====
+        const modal = document.getElementById("imageModal");
+        const imgZoomed = document.getElementById("imgZoomed");
+        
+        // Abre o modal ao clicar na imagem
+        imagePreview.addEventListener("click", function() {
+            modal.style.display = "block";
+            imgZoomed.src = this.src;
+        });
+
+        // Fecha o modal ao clicar nele ou no "X"
+        modal.addEventListener("click", function() {
+            modal.style.display = "none";
+        });
+        // ================================
+
+        // FUNÇÃO: Carregar imagem e lista salvas
         function loadSavedData() {
             const savedImage = localStorage.getItem('savedImageData');
             if (savedImage) {
@@ -317,7 +390,6 @@
                 buttonGroup.style.display = 'flex';
                 statusText.innerText = 'Imagem recuperada da última sessão.';
 
-                // Tenta puxar a lista salva também
                 const savedList = localStorage.getItem('savedListData');
                 if (savedList) {
                     try {
@@ -341,7 +413,7 @@
         
         loadSavedData();
 
-        // FUNÇÃO: Processar imagem nova
+        // FUNÇÃO: Processar imagem nova para o display (tela)
         function processImage(file) {
             if (!file || !file.type.startsWith('image/')) {
                 statusText.innerText = 'Por favor, forneça um arquivo de imagem válido.';
@@ -359,12 +431,11 @@
                 outputList.innerHTML = '';
                 resultContainer.style.display = 'none';
 
-                // Salva a nova imagem e apaga a lista antiga para não haver confusão
                 try {
                     localStorage.setItem('savedImageData', base64Image);
                     localStorage.removeItem('savedListData');
                 } catch (error) {
-                    console.warn("Imagem muito grande para salvar.");
+                    console.warn("Imagem muito grande para salvar na memória.");
                 }
             }
             reader.readAsDataURL(file);
@@ -387,10 +458,9 @@
             }
         });
 
-        // FUNÇÃO: Botão Limpar
         clearBtn.addEventListener('click', function() {
             localStorage.removeItem('savedImageData');
-            localStorage.removeItem('savedListData'); // Remove a lista também
+            localStorage.removeItem('savedListData'); 
             imagePreview.src = '';
             imagePreview.style.display = 'none';
             buttonGroup.style.display = 'none';
@@ -401,16 +471,51 @@
             imageInput.value = ''; 
         });
 
+        // FUNÇÃO: Pré-processamento Otimizado para OCR
+        function enhanceImageForOCR(imageElement) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                const scale = 2;
+                canvas.width = imageElement.naturalWidth * scale;
+                canvas.height = imageElement.naturalHeight * scale;
+
+                ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                const contrast = 60; 
+                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const cinza = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+                    let corFinal = factor * (cinza - 128) + 128;
+                    corFinal = Math.max(0, Math.min(255, corFinal));
+
+                    data[i] = corFinal;     
+                    data[i + 1] = corFinal; 
+                    data[i + 2] = corFinal; 
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            });
+        }
+
         // FUNÇÃO: Extrair
         extractBtn.addEventListener('click', async function() {
             extractBtn.disabled = true;
-            statusText.innerText = 'Lendo a imagem... Aguarde (isso pode levar alguns segundos).';
+            statusText.innerText = 'Tratando imagem e lendo texto... Aguarde.';
             statusText.style.color = 'inherit';
 
             try {
+                const imagemOtimizadaParaIA = await enhanceImageForOCR(imagePreview);
+
                 const result = await Tesseract.recognize(
-                    imagePreview.src,
-                    'por',
+                    imagemOtimizadaParaIA,
+                    'por', 
                     { logger: m => console.log(m) }
                 );
 
@@ -437,13 +542,12 @@
                         outputList.appendChild(li);
                     });
                     resultContainer.style.display = 'flex';
-                    statusText.innerText = 'Lista gerada com sucesso!';
+                    statusText.innerText = 'Lista gerada com alta precisão!';
                     
-                    // Salva a lista gerada no navegador
                     localStorage.setItem('savedListData', JSON.stringify(itensParaLista));
                 } else {
                     statusText.innerText = 'Nenhum item correspondente ao filtro foi encontrado na imagem.';
-                    localStorage.removeItem('savedListData'); // Se não achou nada, limpa dados velhos
+                    localStorage.removeItem('savedListData'); 
                 }
 
             } catch (error) {
