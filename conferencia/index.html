@@ -147,6 +147,45 @@
             min-height: 60px;
         }
 
+        .card-body {
+            padding: 0 20px 20px 20px;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left;
+            flex-grow: 1; /* Faz o cartão esticar para ocupar o espaço */
+        }
+        
+        .card-body h4 {
+            margin: 0 0 5px 0;
+            color: #F37021; /* Laranja do tema para destacar os subtítulos */
+            font-size: 15px;
+        }
+
+        .card-body p {
+            margin: 0 0 15px 0;
+            color: var(--text-muted, #9aa0a6);
+        }
+
+        [data-theme="light"] .card-body p {
+            color: #5f6368;
+        }
+
+        /* Caixa de aviso especial */
+        .card-body .alerta {
+            font-size: 12px;
+            color: #fbbc04;
+            background: rgba(251, 188, 4, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #fbbc04;
+            margin-top: -5px;
+        }
+        
+        [data-theme="light"] .card-body .alerta {
+            color: #b06000;
+            background-color: #fef7e0;
+        }
+
         /* Rodapé */
         .footer {
             margin-top: 50px;
@@ -197,6 +236,13 @@
             <div class="card-title">
                 Conferência de Transações
             </div>
+            <div class="card-body">
+                <h4>Como usar:</h4>
+                <p>Selecione todas as informações contidas na transação (do código ao status de todas as colunas) e cole na barra de colagem. Se preferir, envie o arquivo CSV ou TXT.</p>
+                
+                <h4>Objetivo:</h4>
+                <p>Facilitar no processo de bipar o número de série dos itens na transação.</p>
+            </div>
         </a>
 
         <a href="https://estoquetools.netlify.app/extratordeimagens" class="tool-card">
@@ -205,6 +251,17 @@
             </div>
             <div class="card-title">
                 Extrator Inteligente de Imagens
+            </div>
+            <div class="card-body">
+                <h4>Como usar:</h4>
+                <p>Selecione uma imagem ou cole na página para poder fazer a extração de textos (palavras ou números).</p>
+                
+                <h4>Objetivo:</h4>
+                <p>Sabe aquela imagem cheia de textos que você não tem muito tempo para digitalizar? Com essa ferramenta você ganha tempo e agiliza seu serviço.</p>
+
+                <div class="alerta">
+                    <strong>⚠️ Atenção:</strong> Verifique se os textos extraídos estão corretos, pois dependendo da qualidade da imagem, a ferramenta pode não identificar com precisão. Se for escrever e tirar foto, faça com letras legíveis.
+                </div>
             </div>
         </a>
     </div>
