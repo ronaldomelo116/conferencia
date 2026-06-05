@@ -9,6 +9,7 @@
     <link rel="icon" type="img/png" href="favicon.png">
     <link rel="shortcut icon" type="img/png" href="img/favicon.png">
     
+    <!-- Bibliotecas PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -202,7 +203,8 @@
         li:last-child { border-bottom: none; }
         .mensagem-vazia { color: var(--text-muted); text-align: center; justify-content: center; width: 100%; }
         
-        .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3fr 1.5fr 1.5fr 1fr 0.6fr 1fr; gap: 15px; align-items: center; padding-right: 15px; }
+        /* Ajuste fino na largura das colunas para parecer mais com o Excel */
+        .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3.5fr 1.5fr 3.5fr 1fr 0.6fr 1fr; gap: 15px; align-items: center; padding-right: 15px; }
         .col-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .col-ns { color: var(--primary-color); font-weight: bold; }
 
@@ -287,7 +289,7 @@
 
 <script>
     // =====================================================================
-    // 1. BANCO DE DADOS DE SUBCATEGORIAS CONHECIDAS
+    // 1. BANCO DE DADOS DE SUBCATEGORIAS (Com a numeração de 10 caracteres)
     // =====================================================================
     const subcategoriasConhecidas = [
         "1000014159 cabo alimentacao 0,7m azul/preto hdepc",
@@ -382,7 +384,7 @@
         return null;
     }
 
-    // Configuração do PDF.JS
+    // Configuração do PDF.JS (Evita erro CORS)
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -462,7 +464,105 @@
         pasteArea.value = '';
     }
 
-    // --- LEITURA DE TEXTO / CSV ---
+    // =====================================================================
+    // O NOVO CÉREBRO DE LEITURA (SUPER PARSER)
+    // Alinha perfeitamente a Tabela independentemente se o PDF bagunçar
+    // =====================================================================
+    function parseLinhaInteligente(limpo) {
+        let codigoMatch = limpo.match(/^(\d{4,8})\s+/);
+        if (!codigoMatch) return null;
+        let codigo = codigoMatch[1];
+        let restante = limpo.substring(codigoMatch[0].length).trim();
+
+        let status = '-';
+        let statusMatch = restante.match(/\s+(confirmado|pendente|cancelado)$/i);
+        if (statusMatch) {
+            status = statusMatch[1];
+            restante = restante.substring(0, restante.length - statusMatch[0].length).trim();
+        }
+
+        let qtd = '1';
+        let funcionario = '-';
+        let funcMatch = restante.match(/\s+(\d{1,4})\s+([A-Za-zÀ-ÿ\s\.\-]+)$/);
+        if (funcMatch && !funcMatch[2].toLowerCase().includes('pronto') && !funcMatch[2].toLowerCase().includes('defeito') && !funcMatch[2].toLowerCase().includes('uso')) {
+            qtd = funcMatch[1];
+            funcionario = funcMatch[2].trim().toUpperCase();
+            restante = restante.substring(0, restante.length - funcMatch[0].length).trim();
+        } else {
+            let endQtdMatch = restante.match(/\s+(\d{1,4})$/);
+            if (endQtdMatch) {
+                qtd = endQtdMatch[1];
+                restante = restante.substring(0, restante.length - endQtdMatch[0].length).trim();
+            }
+        }
+
+        let estado = '-';
+        let estadoMatch = restante.match(/\s+(pronto para uso|com defeito|em uso|danificado|reparo)$/i);
+        if (estadoMatch) {
+            estado = estadoMatch[1];
+            restante = restante.substring(0, restante.length - estadoMatch[0].length).trim();
+        }
+
+        let subcategoria = '-';
+        let itemNome = '-';
+        let ns = '-';
+
+        let subConhecida = rastrearSubcategoria(restante);
+        
+        if (subConhecida) {
+            subcategoria = subConhecida;
+            ns = '-';
+            itemNome = restante.replace(subConhecida, '').trim() || subConhecida;
+        } else {
+            let regex10 = /\b[123]\d{9}\b/g;
+            let matches = [...restante.matchAll(regex10)];
+
+            if (matches.length > 0) {
+                let lastMatch = matches[matches.length - 1];
+                subcategoria = restante.substring(lastMatch.index).trim();
+                let antesDaSub = restante.substring(0, lastMatch.index).trim();
+
+                if (antesDaSub.length > 0) {
+                    let ehSemNS = itensSemNS.some(kw => antesDaSub.toLowerCase().includes(kw.toLowerCase()));
+                    if (ehSemNS) {
+                        itemNome = antesDaSub;
+                        ns = '-';
+                    } else {
+                        let lastSpace = antesDaSub.lastIndexOf(' ');
+                        if (lastSpace !== -1) {
+                            ns = antesDaSub.substring(lastSpace + 1).trim();
+                            itemNome = antesDaSub.substring(0, lastSpace).trim();
+                        } else {
+                            ns = antesDaSub;
+                            itemNome = '-';
+                        }
+                    }
+                } else {
+                    itemNome = subcategoria;
+                }
+            } else {
+                let ehSemNS = itensSemNS.some(kw => restante.toLowerCase().includes(kw.toLowerCase()));
+                if (ehSemNS) {
+                    itemNome = restante;
+                    subcategoria = restante;
+                    ns = '-';
+                } else {
+                    let lastSpace = restante.lastIndexOf(' ');
+                    if (lastSpace !== -1) {
+                        ns = restante.substring(lastSpace + 1).trim();
+                        itemNome = restante.substring(0, lastSpace).trim();
+                        subcategoria = itemNome;
+                    } else {
+                        itemNome = restante;
+                        subcategoria = restante;
+                    }
+                }
+            }
+        }
+
+        return { codigo, itemNome, ns, subcategoria, estado, qtd, funcionario, status };
+    }
+
     function processarTexto(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
@@ -473,70 +573,25 @@
 
         let novosDados = [];
         linhas.forEach(linha => {
-            let limpo = linha.replace(/"/g, '').trim();
+            let limpo = linha.replace(/"/g, '').replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
             if (limpo.toLowerCase().includes('código') && limpo.toLowerCase().includes('status')) return; 
-            
-            let separador = '\t';
-            if (limpo.includes('\t')) separador = '\t';
-            else if (limpo.includes(';')) separador = ';';
-            else if (limpo.includes(',')) separador = ',';
 
-            let colunas = limpo.split(separador).map(c => c.trim()).filter(c => c !== '');
-            let codigo = colunas[0];
-
-            if (codigo && /^\d{4,8}$/.test(codigo)) {
-                let ns = '-', subcategoria = '-', itemNome = '-', estado = '-', qtd = '1', funcionario = '-';
-                let p = colunas.length - 1;
-                
-                if (colunas[p] && (colunas[p].toLowerCase().includes('confirmado') || colunas[p].toLowerCase().includes('pendente') || colunas[p].toLowerCase().includes('cancelado'))) p--;
-                if (p >= 1 && isNaN(parseInt(colunas[p])) && colunas[p].length > 5) { funcionario = colunas[p].toUpperCase(); p--; }
-                if (p >= 1 && /^[0-9]{1,4}$/.test(colunas[p])) { qtd = colunas[p]; p--; }
-                if (p >= 1 && (colunas[p].toLowerCase().includes('pronto') || colunas[p].toLowerCase().includes('defeito') || colunas[p].toLowerCase().includes('uso'))) { estado = colunas[p]; p--; }
-
-                let linhaOriginalInteira = colunas.join(' ');
-                let subcategoriaConhecida = rastrearSubcategoria(linhaOriginalInteira);
-                let ehItemSemNS = itensSemNS.some(kw => linhaOriginalInteira.toLowerCase().includes(kw));
-                
-                if (subcategoriaConhecida) {
-                    subcategoria = subcategoriaConhecida;
-                    ns = '-'; 
-                    itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
-                    if (itemNome.toLowerCase().includes(subcategoriaConhecida.toLowerCase())) {
-                        itemNome = itemNome.toLowerCase().replace(subcategoriaConhecida.toLowerCase(), '').trim();
-                    }
-                    if (itemNome === '') itemNome = subcategoriaConhecida; 
-                } else {
-                    if (p >= 1) { subcategoria = colunas[p]; p--; }
-                    if (p >= 1) { ns = colunas[p]; p--; }
-                    itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
-                    
-                    if (ehItemSemNS) {
-                        ns = '-';
-                    } else {
-                        let mCode = itemNome.match(/\b[123]\d{9}\b/);
-                        if (mCode && !subcategoria.includes(mCode[0])) {
-                            subcategoria = mCode[0] + " " + subcategoria.replace(/^-$/, '').trim();
-                        }
-                        if (/\b[123]\d{9}\b/.test(ns)) {
-                            subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
-                            ns = '-';
-                        }
-                    }
-                }
-
+            let parsed = parseLinhaInteligente(limpo);
+            if (parsed) {
                 novosDados.push({
                     linhaOriginal: limpo,
                     linhaUpper: limpo.toUpperCase(),
                     verificado: false,
                     dataConferencia: null,
-                    colunasParseadas: [codigo, '-', itemNome, ns, subcategoria, estado, qtd, funcionario]
+                    colunasParseadas: [
+                        parsed.codigo, '-', parsed.itemNome, parsed.ns, parsed.subcategoria, parsed.estado, parsed.qtd, parsed.funcionario
+                    ]
                 });
             }
         });
         adicionarDados(novosDados);
     }
 
-    // --- LEITURA GEOMÉTRICA PDF ---
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -548,9 +603,8 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
                 
-                let extractedRows = [];
-                let currentRow = null;
-                let headersX = [40, 100, 320, 450, 580, 680, 720, 800]; 
+                let extractedStrings = [];
+                let currentString = "";
 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
@@ -560,26 +614,6 @@
                     const matchT = pageText.match(/Transa[çc][ãa]o:\s*(\d+)/i);
                     if(matchT) {
                         inputTransacao.value = matchT[1]; localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
-                    }
-
-                    textContent.items.forEach(item => {
-                        let t = item.str.trim().toLowerCase();
-                        if(t === 'codigo' || t === 'código') headersX[0] = item.transform[4];
-                        else if(t === 'item') headersX[1] = item.transform[4];
-                        else if(t === 'n/s') headersX[2] = item.transform[4];
-                        else if(t === 'subcategoria') headersX[3] = item.transform[4];
-                        else if(t === 'estado') headersX[4] = item.transform[4];
-                        else if(t === 'quantidade') headersX[5] = item.transform[4];
-                        else if(t.includes('funcionario') || t.includes('acao')) headersX[6] = item.transform[4];
-                        else if(t === 'status') headersX[7] = item.transform[4];
-                    });
-
-                    let bounds = [];
-                    for(let j=0; j<7; j++) {
-                        let current = headersX[j];
-                        let next = headersX[j+1];
-                        if (next > current) bounds.push((current + next) / 2);
-                        else bounds.push(current + 50); 
                     }
 
                     const itemsByY = {};
@@ -595,76 +629,35 @@
                     
                     yKeys.forEach(y => {
                         const rowItems = itemsByY[y].sort((a, b) => a.transform[4] - b.transform[4]);
+                        const rowText = rowItems.map(item => item.str.trim()).join(' ');
                         
-                        let colData = ["", "", "", "", "", "", "", ""];
-                        rowItems.forEach(item => {
-                            let x = item.transform[4];
-                            let colIndex = 0;
-                            while(colIndex < 7 && x > bounds[colIndex]) colIndex++;
-                            colData[colIndex] += (colData[colIndex] ? " " : "") + item.str.trim();
-                        });
-
-                        if (colData[0].match(/^\d{4,8}$/)) {
-                            if (currentRow) extractedRows.push(currentRow);
-                            currentRow = colData;
-                        } else if (currentRow) {
-                            for(let c=1; c<8; c++) {
-                                if (colData[c]) currentRow[c] += (currentRow[c] ? " " : "") + colData[c];
-                            }
+                        // Se começar com um número de código, inicia uma nova linha de item
+                        if (/^\d{4,8}(\s|$)/.test(rowText)) {
+                            if (currentString) extractedStrings.push(currentString);
+                            currentString = rowText;
+                        } else if (currentString) {
+                            // Junta as partes que quebram a linha no PDF
+                            currentString += " " + rowText;
                         }
                     });
                 }
-                if (currentRow) extractedRows.push(currentRow);
+                if (currentString) extractedStrings.push(currentString);
 
                 let novosDados = [];
-                extractedRows.forEach(colData => {
-                    let linhaOriginalInteira = colData.join(' ');
-                    
-                    let subcategoria = colData[3] ? colData[3].trim() : '-'; 
-                    let ns = colData[2] ? colData[2].trim() : '-';
-                    let itemNome = colData[1] ? colData[1].trim() : '-';
-                    
-                    let subcategoriaConhecida = rastrearSubcategoria(linhaOriginalInteira);
-                    let ehItemSemNS = itensSemNS.some(kw => linhaOriginalInteira.toLowerCase().includes(kw));
-
-                    if (subcategoriaConhecida) {
-                        subcategoria = subcategoriaConhecida;
-                        ns = '-'; 
-                    } else {
-                        if (ehItemSemNS) {
-                            // Se a geometria jogou parte da subcategoria no NS por engano, arrumamos
-                            if (ns !== '-' && ns !== '') {
-                                subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
-                            }
-                            ns = '-';
-                        } else {
-                            if (/\b[123]\d{9}\b/.test(ns)) {
-                                subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
-                                ns = '-';
-                            }
-                            let match10 = itemNome.match(/\b[123]\d{9}\b/);
-                            if (match10 && !subcategoria.includes(match10[0])) {
-                                subcategoria = match10[0] + " " + subcategoria.replace(/^-$/, '').trim();
-                            }
-                        }
+                extractedStrings.forEach(linhaInteira => {
+                    let limpo = linhaInteira.replace(/\s+/g, ' ').trim();
+                    let parsed = parseLinhaInteligente(limpo);
+                    if (parsed) {
+                        novosDados.push({
+                            linhaOriginal: limpo,
+                            linhaUpper: limpo.toUpperCase(),
+                            verificado: false,
+                            dataConferencia: null,
+                            colunasParseadas: [
+                                parsed.codigo, '-', parsed.itemNome, parsed.ns, parsed.subcategoria, parsed.estado, parsed.qtd, parsed.funcionario
+                            ]
+                        });
                     }
-
-                    novosDados.push({
-                        linhaOriginal: linhaOriginalInteira,
-                        linhaUpper: linhaOriginalInteira.toUpperCase(),
-                        verificado: false,
-                        dataConferencia: null,
-                        colunasParseadas: [
-                            colData[0],
-                            '-', 
-                            itemNome, 
-                            ns, 
-                            subcategoria, 
-                            colData[4] || '-', 
-                            colData[5] || '1', 
-                            colData[6] || '-'  
-                        ]
-                    });
                 });
 
                 adicionarDados(novosDados);
