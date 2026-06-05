@@ -235,7 +235,7 @@
 
 <div class="container">
     <div class="top-bar">
-        <input type="text" id="inputTransacao" class="input-transacao" placeholder="Código da transação..." autocomplete="off">
+        <input type="text" id="inputTransacao" class="inputTransacao" placeholder="Código da transação..." autocomplete="off">
         <div class="painel-contagem">
             Conferidos: <span id="qtdBipados">0</span> / <span id="qtdTotal">0</span>
         </div>
@@ -286,7 +286,87 @@
 </div>
 
 <script>
-    // Configuração do PDF.JS
+
+    // =====================================================================
+    // BANCO DE DADOS DE SUBCATEGORIAS CONHECIDAS
+    // Para adicionar mais no futuro, basta colocar o nome entre aspas e vírgula.
+    // =====================================================================
+    const subcategoriasConhecidas = [
+        "1000014159 cabo alimentacao 0,7m azul/preto hdepc",
+        "1000015775 cabo blind 600v 2 cond 10,5mm",
+        "1000014151 transceptor 300m 1310nm 25g 34061940 huawei",
+        "1000014095 auxiliar de instalacao de jumper mq4/5, area geral",
+        "1000014157 unidade placa acab hert bbu wd22umptg2",
+        "1000016234 5g outdoor router",
+        "1000017863 mini nobreak p4 5v / 9v kp3 10.000 / 10.400",
+        "1000018299 rack cenario 1 c/ fonte mts9304a com kit de instalacao",
+        "1000014976 cabo precon 5g 6f lc-spc sc-apc 15m",
+        "1000010012 abracadeira bap 3",
+        "1000014245 modulo retificador r4850g5 huawei",
+        "1000014244 modulo armazenamento energia 48v 4800w",
+        "1000001240 bandeja fixa frontal 19x1ux300",
+        "1000018078 modulo de funcao aiu02 aiu02-125b 125a/2p",
+        "1000015057 sfp+ 10g 80km tx1490/rx1550 bidi i-temp",
+        "1000014137 cabo sinal rj45 10",
+        "3000004219 espuma de pu standard manual espuma expansiva",
+        "1000018230 suporte unificado antena gps huawei",
+        "1000018241 cabo coaxial 50ohm 10,16mm rg-8u huawei",
+        "1000014133 antena gps 0-1575.42mhz 100mm",
+        "1000014165 kit/cj alimentad antena 27150086 huawei",
+        "1000014158 kit materiais local mpe 02232pan huawei",
+        "1000014153 kit mat local mpe 02232yku huawei",
+        "1000014155 kit mat site mpe 02233bxu huawei",
+        "1000014099 sfp+ 10g 20km tx1270/rx1330 bidi i-temp",
+        "3000005393 cabo flexivel 16,00mm verde - granel",
+        "3000000179 cabo flexivel 25,00mm preto - granel",
+        "1000014136 parafuso cabeca sextavada 6mm metr 16mm",
+        "1000018254 cabo 12f bli lc/upc 35 metros - 6 pares",
+        "1000017072 cabo 02f bli lc/upc 7 metros",
+        "1000017073 caixa op preconectorizada lc/upc 6 dpx",
+        "1000014134 provedor aterramento 27150221 huawei",
+        "1000014084 etiqueta de cabo 29080222 draen rru2 set",
+        "1000015862 unidade cabo jumper 8t rru5818 rf 3.0m",
+        "1000014088 luva de isolacao retratil a frio",
+        "1000014094 jumper rf,0,5m,mq4sf-i,4*coax50-4,7/1, 9b-i,4*4,3-10sf-i, jumper superflexivel de 1/4 de",
+        "1000014091 jumper rf,0,5m,mq5sf-i,5*coax50-4,7/1, 9b-i,5*4,3-10sf-i, jumper superflexivel de 1/4 de",
+        "1000014093 cabo de sinal,cabo de comunicacao aig,5m,d9m+d9(ps)(w),cc4p0.5 pb(s),rc8sf(s)-i",
+        "1000014090 downtilt kit kit pra inclinacao da anten",
+        "3000013314 grampo aterramento duplo 3/8 - granel",
+        "3000001093 parafuso sextavado galv 3/8 x 1.1/2",
+        "3000027704 parafuso s/ por 5/16 x 1 unc gf",
+        "3000026733 porca sext ac a563 gr a 2h 3/8pol unc",
+        "3000000399 arruela lisa 5/16",
+        "3000000135 porca sextavada unc 5/16 galvanizada a fogo",
+        "3000000574 arruela lisa 3/8 gf",
+        "1000018235 quadro monof filtro lin 220v 700x590x170",
+        "3000005440 cabo flexivel 4,00mm verde",
+        "3000005384 cabo flexivel 4,00mm azul",
+        "3000005379 cabo flexivel 4,00mm preto",
+        "3000000198 terminal pino 4-6mm - granel",
+        "1000014089 unidade de distribuicao de energia cc dcdu16d-02",
+        "3000014554 terminal anel 4-6mm furo 1/4 - granel",
+        "3000000878 cabo pp 2x6,00mm",
+        "3000010471 cabo de rede blindado cat.5",
+        "3000000086 conector rj45 cat.5 blindado - granel",
+        "3000000963 cabo flexivel 1,50mm preto - granel",
+        "3000000008 cabo flexivel 1,50mm vermelho - granel",
+        "1000015861 rru5818 b40 for multi-mode 2300mhz 2400m",
+        "1000014085 antena direcional,dx-2300-2690-90-16i -m-r,2 cluster macho,kit de downtilt embalado separadamente",
+        "3000000346 terminal pino 2,5mm - granel",
+        "3000015144 terminal anel 2,5mm furo 1/4 - granel",
+        "1000014142 modulo funcao 02311vff-1 huawei",
+        "2000000238 conector plug p4 macho com borne",
+        "2000012949 arruela fogo p/ bap",
+        "2000012950 porca galvanizada a fogo p/ bap",
+        "2000012991 parafuso galvanizada a fogo p/ bap",
+        "1000013838 placa b003-ubbpg2c huawei"
+    ];
+    
+    // Deixando o array pronto para busca super rápida e inteligente
+    const subcategoriasLimpo = subcategoriasConhecidas.map(s => s.toLowerCase().replace(/\s+/g, ' '));
+
+
+    // Configuração do PDF.JS - Solução contra erro CORS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -330,19 +410,6 @@
     let totalItens = 0, itensBipados = 0, typingTimer, currentSortColumn = -1, currentSortDirection = 'asc', estoqueDados = []; 
     const tempoDeEspera = 150; 
 
-    // --- LISTA INTELIGENTE DE ITENS SEM NÚMERO DE SÉRIE ---
-    // Você pode adicionar mais itens aqui no futuro. Basta colocar a palavra toda em minúscula.
-    const itensSemNS = [
-        "cabo alimentacao", "cabo blind", "auxiliar de instalacao", "area geral",
-        "cabo precon", "abracadeira", "bandeja", "modulo de funcao",
-        "cabo sinal", "espuma", "suporte", "cabo coaxial", "antena",
-        "kit/cj", "kit materiais", "kit mat", "cabo flexivel", "parafuso",
-        "cabo 12f", "cabo 02f", "caixa op", "provedor aterramento", "etiqueta",
-        "unidade cabo", "luva", "jumper", "downtilt", "grampo", "porca",
-        "arruela", "quadro monof", "terminal", "cabo pp", "cabo de rede",
-        "conector"
-    ];
-
     window.onload = function() {
         const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
         if (dadosSalvos) {
@@ -379,6 +446,20 @@
         pasteArea.value = '';
     }
 
+    // --- FUNÇÃO PARA RASTREAR A SUBCATEGORIA COM INTELIGÊNCIA ARTIFICIAL ---
+    function rastrearSubcategoria(textoDaLinha) {
+        let textoLimpo = textoDaLinha.toLowerCase().replace(/\s+/g, ' ');
+        // Verifica se o texto da linha contem alguma das subcategorias do nosso banco de dados
+        let match = subcategoriasLimpo.find(sub => textoLimpo.includes(sub));
+        if (match) {
+            // Se encontrou, retorna a string exata capitalizada de volta como na lista original
+            let index = subcategoriasLimpo.indexOf(match);
+            return subcategoriasConhecidas[index];
+        }
+        return null;
+    }
+
+    // --- LEITURA DO TEXTO (TXT ou COLADO) ---
     function processarTexto(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
@@ -401,43 +482,33 @@
             let codigo = colunas[0];
 
             if (codigo && /^\d{4,8}$/.test(codigo)) {
-                let estadoIndex = -1;
-                for (let i = colunas.length - 1; i >= 2; i--) {
-                    let c = colunas[i].toLowerCase();
-                    if (c.includes('pronto') || c.includes('defeito') || c.includes('uso')) {
-                        estadoIndex = i; break;
-                    }
-                }
+                let subcategoriaConhecida = rastrearSubcategoria(limpo);
                 
                 let ns = '-', subcategoria = '-', itemNome = '-', estado = '-', qtd = '1', funcionario = '-';
 
-                if (estadoIndex !== -1) {
-                    estado = colunas[estadoIndex];
-                    let p = estadoIndex - 1;
+                // Usando a lógica de trás para frente
+                let p = colunas.length - 1;
+                
+                if (colunas[p] && (colunas[p].toLowerCase().includes('confirmado') || colunas[p].toLowerCase().includes('pendente') || colunas[p].toLowerCase().includes('cancelado'))) p--;
+                if (p >= 1 && isNaN(parseInt(colunas[p])) && colunas[p].length > 5) { funcionario = colunas[p].toUpperCase(); p--; }
+                if (p >= 1 && /^[0-9]{1,4}$/.test(colunas[p])) { qtd = colunas[p]; p--; }
+                if (p >= 1 && (colunas[p].toLowerCase().includes('pronto') || colunas[p].toLowerCase().includes('defeito') || colunas[p].toLowerCase().includes('uso'))) { estado = colunas[p]; p--; }
 
-                    subcategoria = colunas[p] || '-';
-                    p--;
-
-                    // Aqui entra a INTELIGÊNCIA ARTIFICIAL DOS ITENS SEM NS
-                    let textoDaLinhaLowerCase = limpo.toLowerCase();
-                    let ehItemSemNS = itensSemNS.some(kw => textoDaLinhaLowerCase.includes(kw));
-
-                    if (!ehItemSemNS && p >= 1) {
-                        let isLikelyNS = (str) => str && (/^(FHTT|ZTEG|HWTC|ALCL|CMDC)/i.test(str) || /^[A-Z0-9]{8,24}$/i.test(str));
-                        if (isLikelyNS(colunas[p]) || (colunas.length > 5 && p > 1)) {
-                            ns = colunas[p];
-                            p--;
-                        }
-                    }
-
+                // Se a nossa IA achou a subcategoria, nós usamos ela e tiramos o resto do texto
+                if (subcategoriaConhecida) {
+                    subcategoria = subcategoriaConhecida;
+                    // O que sobrou é considerado o Nome do Item (Já que não tem N/S)
                     itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
-
-                    qtd = colunas[estadoIndex + 1] || '1';
-                    if (colunas.length > estadoIndex + 2) {
-                        funcionario = colunas.slice(estadoIndex + 2).join(' ').replace(/(pendente|ok|---)/ig, '').trim().toUpperCase();
+                    // Tira a subcategoria de dentro do Nome do Item para não ficar repetido
+                    if (itemNome.toLowerCase().includes(subcategoriaConhecida.toLowerCase())) {
+                        itemNome = itemNome.toLowerCase().replace(subcategoriaConhecida.toLowerCase(), '').trim();
                     }
+                    if (itemNome === '') itemNome = subcategoriaConhecida; // Se ficar vazio, repete o nome
                 } else {
-                    itemNome = colunas[1] || '-'; ns = colunas[2] || '-'; subcategoria = colunas[3] || '-';
+                    // Lógica normal caso não esteja na lista de exceções
+                    if (p >= 1) { subcategoria = colunas[p]; p--; }
+                    if (p >= 1) { ns = colunas[p]; p--; }
+                    itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
                 }
 
                 novosDados.push({
@@ -445,13 +516,14 @@
                     linhaUpper: limpo.toUpperCase(),
                     verificado: false,
                     dataConferencia: null,
-                    colunasParseadas: [codigo, '-', itemNome, ns, subcategoria, estado, qtd, funcionario || '-']
+                    colunasParseadas: [codigo, '-', itemNome, ns, subcategoria, estado, qtd, funcionario]
                 });
             }
         });
         adicionarDados(novosDados);
     }
 
+    // --- LEITURA GEOMÉTRICA DE PDF ---
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -533,17 +605,31 @@
 
                 let novosDados = [];
                 extractedRows.forEach(colData => {
+                    let linhaOriginalInteira = colData.join(' ');
+                    
+                    // IA Mágica de Subcategorias entra em ação aqui
+                    let subcategoriaConhecida = rastrearSubcategoria(linhaOriginalInteira);
+                    
+                    let subcategoria = colData[3] || '-'; // Posição 3 do Array geométrico é a Subcategoria
+                    let ns = colData[2] || '-';
+                    let itemNome = colData[1] || '-';
+                    
+                    if (subcategoriaConhecida) {
+                        subcategoria = subcategoriaConhecida;
+                        ns = '-'; // Limpa o NS pois não tem NS nesses itens
+                    }
+
                     novosDados.push({
-                        linhaOriginal: colData.join(' '),
-                        linhaUpper: colData.join(' ').toUpperCase(),
+                        linhaOriginal: linhaOriginalInteira,
+                        linhaUpper: linhaOriginalInteira.toUpperCase(),
                         verificado: false,
                         dataConferencia: null,
                         colunasParseadas: [
                             colData[0],
                             '-', 
-                            colData[1] || '-', 
-                            colData[2] || '-', 
-                            colData[3] || '-', 
+                            itemNome, 
+                            ns, 
+                            subcategoria, 
                             colData[4] || '-', 
                             colData[5] || '1', 
                             colData[6] || '-'  
