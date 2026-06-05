@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <style>
+        /* --- VARIÁVEIS DE TEMA --- */
         :root {
             --bg-container: #202124;
             --bg-section: #303134;
@@ -361,7 +362,6 @@
             width: 100%;
         }
         
-        /* Grid atualizado para 8 colunas */
         .grid-row {
             flex: 1;
             display: grid;
@@ -512,9 +512,15 @@
 </div>
 
 <script>
-    // Configura o Worker do PDF.js para processar arquivos no navegador
+    // --- CORREÇÃO DO BLOQUEIO DE SEGURANÇA (CORS) DO PDF.JS ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    try {
+        const blob = new Blob([`importScripts('${pdfWorkerSrc}');`], { type: 'application/javascript' });
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+    } catch (error) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
+    }
 
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
@@ -607,22 +613,24 @@
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // Função universal que trata textos de PDF, CSV ou TXT
+    // --- LEITURA INTELIGENTE QUE FUNCIONA PARA TXT, CSV E O PDF EMBARALHADO ---
     function processarConteudo(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
+        
+        // Puxa o código da transação se achar no meio do texto
+        const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
+        if(matchT) {
+            inputTransacao.value = matchT[1];
+            localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
+        }
+
         let novosDados = [];
 
         linhas.forEach(linha => {
             let limpo = linha.replace(/"/g, '').trim();
+            // Pula a linha do cabeçalho
+            if (limpo.toLowerCase().includes('código') && limpo.toLowerCase().includes('status')) return; 
             
-            // Busca o código da transação no meio do texto
-            const matchT = limpo.match(/Transa[çc][ãa]o:\s*(\d+)/i);
-            if(matchT) {
-                inputTransacao.value = matchT[1];
-                localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
-                return; // Pula a linha do cabeçalho
-            }
-
             let separador = '\t';
             if (limpo.includes('\t')) separador = '\t';
             else if (limpo.includes(';')) separador = ';';
@@ -631,31 +639,48 @@
             let colunas = limpo.split(separador).map(c => c.trim()).filter(c => c !== '');
             let codigo = colunas[0];
 
-            // Heurística de IA: Se a linha começa com um número longo (código do produto), ela é válida!
+            // Verifica se a linha começa com um código válido (só números, de 4 a 8 caracteres)
             if (codigo && /^\d{4,8}$/.test(codigo)) {
                 
-                // Normaliza o array de colunas (Se o CSV tiver a coluna "Data" vazia, pulamos ela)
-                let offset = 0;
-                if (colunas[1] === '---' || colunas[1] === '') {
-                    offset = 1;
-                }
+                // Mapeador de Inteligência Artificial: procura a coluna que tem o Número de Série
+                let nsIndex = colunas.findIndex((c, i) => i > 0 && /^[A-Z0-9]{8,20}$/i.test(c) && /[A-Z]/i.test(c) && /[0-9]/.test(c));
+                // Caso seja muito específico e só tenha letras, força procurar pelo FHTT da Brisanet
+                if (nsIndex === -1) nsIndex = colunas.findIndex(c => c.toUpperCase().includes('FHTT'));
 
-                novosDados.push({
-                    linhaOriginal: limpo,
-                    linhaUpper: limpo.toUpperCase(),
-                    verificado: false,
-                    dataConferencia: null,
-                    // Mapeamento exato das colunas solicitadas
-                    colunasParseadas: [
-                        colunas[0],                             // 0: Código
-                        colunas[1 + offset] || '-',             // 1: Item
-                        colunas[2 + offset] || '-',             // 2: N/S
-                        colunas[3 + offset] || '-',             // 3: Subcategoria
-                        colunas[4 + offset] || '-',             // 4: Estado (ou misturado)
-                        colunas[5 + offset] || '-',             // 5: Quantidade
-                        colunas[6 + offset] || '-',             // 6: Funcionario
-                    ]
-                });
+                if (nsIndex !== -1) {
+                    // Monta o nome do item juntando tudo que estiver entre o código e o NS
+                    let itemNome = colunas.slice(1, nsIndex).join(' ').replace(/---/g, '').trim() || '-';
+                    let ns = colunas[nsIndex];
+                    
+                    // Localiza a coluna de Estado
+                    let estadoIndex = colunas.findIndex(c => c.toLowerCase().includes('pronto') || c.toLowerCase().includes('defeito') || c.toLowerCase().includes('uso'));
+                    let estado = estadoIndex !== -1 ? colunas[estadoIndex] : '-';
+                    
+                    // Localiza o NS Interno (geralmente tem 12 a 16 dígitos e fica depois do NS principal)
+                    let nsInternoIndex = colunas.findIndex((c, i) => i > nsIndex && /^\d{12,16}$/.test(c));
+                    let nsInterno = nsInternoIndex !== -1 ? colunas[nsInternoIndex] : '-';
+                    
+                    // Localiza a Quantidade (número pequeno isolado)
+                    let qtdIndex = colunas.findIndex((c, i) => i > nsIndex && /^[0-9]{1,3}$/.test(c));
+                    let qtd = qtdIndex !== -1 ? colunas[qtdIndex] : '1';
+
+                    novosDados.push({
+                        linhaOriginal: limpo,
+                        linhaUpper: limpo.toUpperCase(),
+                        verificado: false,
+                        dataConferencia: null,
+                        colunasParseadas: [
+                            codigo,
+                            '-', // Data (fica com traço por padrão até o usuário bipar)
+                            itemNome,
+                            ns,
+                            nsInterno,
+                            estado,
+                            qtd,
+                            '-' // Funcionario/Ação
+                        ]
+                    });
+                }
             }
         });
 
@@ -665,33 +690,33 @@
             renderizarDaMemoria(); 
             btnLimpar.disabled = false;
             btnBaixarPDF.disabled = false; 
-        } else {
+        } else if (content.length > 15) {
             alert("Nenhum equipamento válido foi encontrado no arquivo.");
         }
-        
         pasteArea.value = '';
     }
 
-    // Leitura inteligente de Arquivo (Suporta PDF nativamente agora!)
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
         fileInput.value = ''; 
 
+        // SE O ARQUIVO FOR PDF...
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
             try {
-                btnCarregarTexto.textContent = "⏳ Extraindo PDF...";
+                btnCarregarTexto.textContent = "⏳ Lendo PDF...";
                 btnCarregarTexto.disabled = true;
                 
                 const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+                const pdf = await loadingTask.promise;
                 let fullTextLines = [];
 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
                     
-                    // Extrai número da transação na página toda
+                    // Extrai número da transação perdido no PDF
                     const pageText = textContent.items.map(item => item.str).join(' ');
                     const matchT = pageText.match(/Transa[çc][ãa]o:\s*(\d+)/i);
                     if(matchT) {
@@ -699,31 +724,35 @@
                         localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
                     }
 
-                    // Agrupa os itens do PDF pela altura da linha para formar uma tabela perfeita
+                    // Agrupa as palavras que estão na mesma altura da linha (margem de erro de 6 pixels)
                     const itemsByY = {};
                     textContent.items.forEach(item => {
-                        const y = Math.round(item.transform[5]); 
+                        const str = item.str.trim();
+                        if(!str) return;
+                        const y = Math.round(item.transform[5] / 6) * 6; 
                         if (!itemsByY[y]) itemsByY[y] = [];
                         itemsByY[y].push(item);
                     });
 
+                    // Junta a linha inteira colocando um Tab (\t) entre as colunas
                     const yKeys = Object.keys(itemsByY).sort((a, b) => b - a);
                     yKeys.forEach(y => {
                         const rowItems = itemsByY[y].sort((a, b) => a.transform[4] - b.transform[4]);
-                        const rowText = rowItems.map(item => item.str.trim()).filter(str => str !== '').join('\t');
+                        const rowText = rowItems.map(item => item.str.trim()).join('\t');
                         if (rowText) fullTextLines.push(rowText);
                     });
                 }
                 processarConteudo(fullTextLines.join('\n'));
+                
             } catch (error) {
                 console.error(error);
-                alert("Erro ao ler o arquivo PDF. Tente colar o texto na caixa.");
+                alert(`Erro ao ler o arquivo PDF:\n${error.message}\n\nTente copiar a tabela e colar o texto na caixa abaixo.`);
             } finally {
                 btnCarregarTexto.innerHTML = "📥 Carregar Texto Colado";
                 btnCarregarTexto.disabled = false;
             }
         } else {
-            // TXT ou CSV normal
+            // SE FOR TXT OU CSV
             const reader = new FileReader();
             reader.onload = function(e) {
                 processarConteudo(e.target.result);
@@ -742,7 +771,6 @@
         processarConteudo(textoColado);
     });
 
-    // Ordenação (Sort)
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', () => {
             const colIndex = parseInt(header.dataset.col);
@@ -765,8 +793,6 @@
     function getColValue(item, colIndex) {
         if (colIndex === 8) return item.verificado ? 'OK' : 'Pendente';
         if (colIndex === 1) return item.dataConferencia ? item.dataConferencia.replace(/<[^>]*>?/gm, ' ') : '-';
-        
-        // Mapeia colunas da UI para o array interno
         let mapIndex = colIndex;
         if (colIndex >= 2) mapIndex = colIndex - 1;
         return item.colunasParseadas[mapIndex] || '-';
@@ -785,19 +811,19 @@
         doc.setFontSize(11);
         doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
 
-        const tableColumn = ["Código", "Data Conf.", "Item", "N/S", "Subcategoria", "Estado", "Qtd", "Func./Ação", "Status"];
+        const tableColumn = ["Código", "Data Conf.", "Nome do Equipamento", "Nº Série", "NS Interno", "Estado", "Qtd", "Func./Ação", "Status"];
         const tableRows = [];
 
         estoqueDados.forEach(item => {
             let rowData = [
                 item.colunasParseadas[0],
                 item.dataConferencia ? item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '') : '-',
-                item.colunasParseadas[1],
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
                 item.colunasParseadas[4],
                 item.colunasParseadas[5],
                 item.colunasParseadas[6],
+                item.colunasParseadas[7],
                 item.verificado ? 'OK' : 'Pendente'
             ];
             tableRows.push(rowData);
@@ -852,12 +878,12 @@
             const displayData = [
                 item.colunasParseadas[0],
                 item.dataConferencia || '-',
-                item.colunasParseadas[1],
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
                 item.colunasParseadas[4],
                 item.colunasParseadas[5],
-                item.colunasParseadas[6]
+                item.colunasParseadas[6],
+                item.colunasParseadas[7]
             ];
 
             let colsHTML = '';
