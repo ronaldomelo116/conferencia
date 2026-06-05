@@ -613,11 +613,10 @@
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- NOVA LEITURA INTELIGENTE QUE RESOLVE A SUBCATEGORIA ---
+    // --- LEITURA BLINDADA (Lê N/S e Subcategoria sem depender de RegEx estrito) ---
     function processarConteudo(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         
-        // Puxa o código da transação se achar no meio do texto
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
         if(matchT) {
             inputTransacao.value = matchT[1];
@@ -628,7 +627,6 @@
 
         linhas.forEach(linha => {
             let limpo = linha.replace(/"/g, '').trim();
-            // Pula a linha do cabeçalho
             if (limpo.toLowerCase().includes('código') && limpo.toLowerCase().includes('status')) return; 
             
             let separador = '\t';
@@ -639,47 +637,56 @@
             let colunas = limpo.split(separador).map(c => c.trim()).filter(c => c !== '');
             let codigo = colunas[0];
 
-            // Verifica se a linha começa com um código válido (só números, de 4 a 8 caracteres)
             if (codigo && /^\d{4,8}$/.test(codigo)) {
                 
-                // Mapeador de IA: Encontra o Índice do Número de Série (Geralmente começa com FHTT)
-                let nsIndex = colunas.findIndex((c, i) => i > 0 && /^[A-Z0-9]{8,20}$/i.test(c) && /[A-Z]/i.test(c) && /[0-9]/.test(c));
-                if (nsIndex === -1) nsIndex = colunas.findIndex(c => c.toUpperCase().includes('FHTT'));
+                // 1. ACHA A COLUNA DO ESTADO PARA USAR DE ÂNCORA (Sempre será Pronto, Defeito ou Uso)
+                let estadoIndex = -1;
+                for (let i = colunas.length - 1; i >= 3; i--) {
+                    let c = colunas[i].toLowerCase();
+                    if (c.includes('pronto') || c.includes('defeito') || c.includes('uso')) {
+                        estadoIndex = i;
+                        break;
+                    }
+                }
 
-                if (nsIndex !== -1) {
-                    // Monta o nome do item juntando tudo que estiver entre o código e o NS
-                    let itemNome = colunas.slice(1, nsIndex).join(' ').replace(/---/g, '').trim() || '-';
-                    let ns = colunas[nsIndex];
-                    
-                    // Localiza a coluna de Estado ("pronto para uso" ou "com defeito")
-                    let estadoIndex = colunas.findIndex((c, i) => i > nsIndex && (c.toLowerCase().includes('pronto') || c.toLowerCase().includes('defeito') || c.toLowerCase().includes('uso')));
-                    
-                    // A MÁGICA ACONTECE AQUI: A Subcategoria é TUDO o que estiver entre o N/S e o Estado!
+                if (estadoIndex !== -1) {
+                    let valE1 = colunas[estadoIndex - 1]; // Provável Subcategoria
+                    let valE2 = colunas[estadoIndex - 2]; // Provável N/S
+
+                    // Função simples para ver se tem cara de Número de Série
+                    let isLikelyNS = (str) => {
+                        if (!str) return false;
+                        str = str.toUpperCase();
+                        if (/^(FHTT|ZTEG|HWTC|ALCL|CMDC)/.test(str)) return true;
+                        if (/^[A-Z0-9]{8,24}$/.test(str)) return true;
+                        return false;
+                    };
+
+                    let ns = '-';
                     let subcategoria = '-';
-                    if (estadoIndex !== -1 && estadoIndex > nsIndex + 1) {
-                        subcategoria = colunas.slice(nsIndex + 1, estadoIndex).join(' ').trim();
-                    } else if (estadoIndex === -1 && colunas.length > nsIndex + 1) {
-                        // Caso a coluna de estado esteja vazia por algum motivo
-                        subcategoria = colunas[nsIndex + 1];
-                    }
-                    
-                    let estado = estadoIndex !== -1 ? colunas[estadoIndex] : '-';
-                    
-                    // Localiza a Quantidade
-                    let qtdIndex = -1;
-                    if (estadoIndex !== -1) {
-                        qtdIndex = colunas.findIndex((c, i) => i > estadoIndex && /^[0-9]{1,3}$/.test(c));
-                    } else {
-                        qtdIndex = colunas.findIndex((c, i) => i > nsIndex + 1 && /^[0-9]{1,3}$/.test(c));
-                    }
-                    let qtd = qtdIndex !== -1 ? colunas[qtdIndex] : '1';
+                    let itemNome = '-';
 
-                    // O que sobrar depois da Quantidade é o Funcionario 
+                    // Inteligência: Se a Subcategoria tiver sumido (coluna em branco no sistema), 
+                    // o E-1 será o N/S e o E-2 será um pedaço do nome do item.
+                    if (isLikelyNS(valE1) && !isLikelyNS(valE2)) {
+                        ns = valE1;
+                        subcategoria = '-';
+                        itemNome = colunas.slice(1, estadoIndex - 1).join(' ').replace(/---/g, '').trim();
+                    } else {
+                        // Comportamento normal: E-2 é N/S, E-1 é Subcategoria (seja número, letra, espaço, etc)
+                        ns = valE2;
+                        subcategoria = valE1;
+                        itemNome = colunas.slice(1, estadoIndex - 2).join(' ').replace(/---/g, '').trim();
+                    }
+
+                    let estado = colunas[estadoIndex];
+                    let qtd = colunas[estadoIndex + 1] || '1';
+                    
                     let funcionario = '-';
-                    if (qtdIndex !== -1 && qtdIndex + 1 < colunas.length) {
-                        let funcStr = colunas.slice(qtdIndex + 1).join(' ').trim().toLowerCase();
-                        funcStr = funcStr.replace('pendente', '').replace('ok', '').replace(/---/g, '').trim();
-                        if (funcStr) funcionario = funcStr.toUpperCase();
+                    if (colunas.length > estadoIndex + 2) {
+                        let f = colunas.slice(estadoIndex + 2).join(' ').toLowerCase();
+                        f = f.replace(/pendente/g, '').replace(/ok/g, '').replace(/---/g, '').trim();
+                        if (f) funcionario = f.toUpperCase();
                     }
 
                     novosDados.push({
@@ -689,13 +696,13 @@
                         dataConferencia: null,
                         colunasParseadas: [
                             codigo,
-                            '-', // Data (preenchida ao bipar)
-                            itemNome,
-                            ns,
-                            subcategoria || '-', // Resolve a Subcategoria perfeitamente
-                            estado,
+                            '-',
+                            itemNome || '-',
+                            ns || '-',
+                            subcategoria || '-', // A subcategoria numérica entra aqui perfeitamente!
+                            estado || '-',
                             qtd,
-                            funcionario || '-'
+                            funcionario
                         ]
                     });
                 }
@@ -833,7 +840,7 @@
                 item.dataConferencia ? item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '') : '-',
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
-                item.colunasParseadas[4], // Agora pega corretamente a Subcategoria
+                item.colunasParseadas[4], 
                 item.colunasParseadas[5],
                 item.colunasParseadas[6],
                 item.colunasParseadas[7],
@@ -893,7 +900,7 @@
                 item.dataConferencia || '-',
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
-                item.colunasParseadas[4], // Renderiza a Subcategoria
+                item.colunasParseadas[4], 
                 item.colunasParseadas[5],
                 item.colunasParseadas[6],
                 item.colunasParseadas[7]
