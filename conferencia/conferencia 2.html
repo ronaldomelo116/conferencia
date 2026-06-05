@@ -9,7 +9,6 @@
     <link rel="icon" type="img/png" href="favicon.png">
     <link rel="shortcut icon" type="img/png" href="img/favicon.png">
     
-    <!-- Bibliotecas PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -203,7 +202,7 @@
         li:last-child { border-bottom: none; }
         .mensagem-vazia { color: var(--text-muted); text-align: center; justify-content: center; width: 100%; }
         
-        .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3.5fr 1.5fr 3.5fr 1fr 0.6fr 1fr; gap: 15px; align-items: center; padding-right: 15px; }
+        .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3fr 1.5fr 3fr 1fr 0.6fr 1.5fr; gap: 15px; align-items: center; padding-right: 15px; }
         .col-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .col-ns { color: var(--primary-color); font-weight: bold; }
 
@@ -215,7 +214,7 @@
         .piscar-aviso { animation: piscarAmarelo 0.8s infinite !important; }
 
         .status-container { width: 80px; display: flex; justify-content: flex-end; align-items: center; }
-        .status-badge { font-size: 13px; padding: 6px 10px; border-radius: 4px; background-color: var(--badge-bg); color: var(--badge-text); font-weight: bold; }
+        .status-badge { font-size: 13px; padding: 6px 10px; border-radius: 4px; background-color: var(--badge-bg); color: var(--badge-text); font-weight: bold; white-space: nowrap; }
         .verificado .status-badge { background-color: #ceead6; color: #137333; }
 
         .footer { max-width: 1400px; width: 100%; margin: 20px auto 0 auto; background-color: var(--bg-container); padding: 20px 30px; border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 14px; box-sizing: border-box; }
@@ -288,7 +287,7 @@
 
 <script>
     // =====================================================================
-    // 1. BANCO DE DADOS DE SUBCATEGORIAS (Com a numeração de 10 caracteres)
+    // 1. BANCO DE DADOS DE SUBCATEGORIAS CONHECIDAS (Não apagar)
     // =====================================================================
     const subcategoriasConhecidas = [
         "1000014159 cabo alimentacao 0,7m azul/preto hdepc",
@@ -363,17 +362,17 @@
     const subcategoriasLimpo = subcategoriasConhecidas.map(s => s.toLowerCase().replace(/\s+/g, ' '));
 
     // =====================================================================
-    // 2. LISTA DE ITENS QUE NÃO POSSUEM NÚMERO DE SÉRIE
+    // 2. LISTA DE ITENS QUE NÃO POSSUEM NÚMERO DE SÉRIE (N/S = -)
     // =====================================================================
     const itensSemNS = [
         "cabo alimentacao", "cabo blind", "auxiliar de instalacao", "area geral",
-        "cabo precon", "abracadeira", "bandeja", "modulo de funcao",
-        "cabo sinal", "espuma", "suporte", "cabo coaxial", "antena",
-        "kit/cj", "kit materiais", "kit mat", "cabo flexivel", "parafuso",
+        "cabo precon", "abracadeira", "bandeja fixa", "modulo de funcao",
+        "cabo sinal", "espuma", "suporte unificado", "cabo coaxial", "antena gps",
+        "kit/cj alimentad", "kit materiais", "kit mat", "cabo flexivel", "parafuso",
         "cabo 12f", "cabo 02f", "caixa op", "provedor aterramento", "etiqueta",
-        "unidade cabo", "luva", "jumper", "downtilt", "grampo", "porca",
-        "arruela", "quadro monof", "terminal", "cabo pp", "cabo de rede",
-        "conector", "placa b003"
+        "unidade cabo", "luva de isolacao", "jumper", "downtilt", "grampo aterramento", "porca",
+        "arruela", "quadro monof", "terminal pino", "terminal anel", "cabo pp", "cabo de rede",
+        "conector plug", "conector rj45"
     ];
 
     function rastrearSubcategoria(textoDaLinha) {
@@ -383,7 +382,7 @@
         return null;
     }
 
-    // Configuração do PDF.JS
+    // Configuração do PDF.JS - Solução contra erro CORS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -464,97 +463,137 @@
     }
 
     // =====================================================================
-    // O NOVO CÉREBRO DE LEITURA (IGNORA O FUNCIONÁRIO)
+    // O NOVO CÉREBRO DE LEITURA (SUPER PARSER REGEX)
+    // Alinha perfeitamente extraindo blocos do final pro começo da string
     // =====================================================================
     function parseLinhaInteligente(limpo) {
+        // 1. Pega o Código (Logo no começo da linha)
         let codigoMatch = limpo.match(/^(\d{4,8})\s+/);
         if (!codigoMatch) return null;
         let codigo = codigoMatch[1];
         let restante = limpo.substring(codigoMatch[0].length).trim();
 
-        let status = '-';
-        let statusMatch = restante.match(/\s+(confirmado|pendente|cancelado)$/i);
+        // 2. Tira o Status do final da linha
+        let status = 'Pendente';
+        let statusMatch = restante.match(/\s+(confirmado|pendente|cancelado|ok)$/i);
         if (statusMatch) {
-            status = statusMatch[1];
+            status = statusMatch[1].trim().toLowerCase();
+            if(status === 'confirmado' || status === 'ok') status = 'OK';
+            else status = 'Pendente';
             restante = restante.substring(0, restante.length - statusMatch[0].length).trim();
         }
 
+        // 3. Isola a QTD, ESTADO e FUNCIONARIO puxando do fim
+        let estado = '-';
         let qtd = '1';
-        let funcionario = '-'; // FORÇADO A FICAR VAZIO. NUNCA MAIS EXIBIRÁ O NOME!
-        
-        let funcMatch = restante.match(/\s+(\d{1,4})\s+([A-Za-zÀ-ÿ\s\.\-]+)$/);
-        if (funcMatch && !funcMatch[2].toLowerCase().includes('pronto') && !funcMatch[2].toLowerCase().includes('defeito') && !funcMatch[2].toLowerCase().includes('uso')) {
-            qtd = funcMatch[1];
-            // Nós achamos o nome do funcionário e retiramos do texto, mas NÃO salvamos na variável
-            restante = restante.substring(0, restante.length - funcMatch[0].length).trim();
+        let funcionario = '-';
+
+        // Tenta achar [Estado] [Quantidade] [Funcionario]
+        let m1 = restante.match(/(pronto para uso|com defeito|em uso|danificado|reparo)\s+(\d{1,4})\s+([A-Za-zÀ-ÿ\s\.\-\/]{4,})$/i);
+        if (m1) {
+            estado = m1[1].trim(); qtd = m1[2].trim(); funcionario = m1[3].trim().toUpperCase();
+            restante = restante.substring(0, restante.length - m1[0].length).trim();
         } else {
-            let endQtdMatch = restante.match(/\s+(\d{1,4})$/);
-            if (endQtdMatch) {
-                qtd = endQtdMatch[1];
-                restante = restante.substring(0, restante.length - endQtdMatch[0].length).trim();
+            // Tenta achar apenas [Quantidade] [Funcionario]
+            let m2 = restante.match(/\s+(\d{1,4})\s+([A-Za-zÀ-ÿ\s\.\-\/]{4,})$/i);
+            if (m2 && !m2[2].toLowerCase().match(/(pronto para uso|com defeito|em uso)/)) {
+                qtd = m2[1].trim(); funcionario = m2[2].trim().toUpperCase();
+                restante = restante.substring(0, restante.length - m2[0].length).trim();
             } else {
-                let justFuncMatch = restante.match(/\s+([A-Za-zÀ-ÿ\s\.\-]+)$/);
-                if (justFuncMatch && !justFuncMatch[1].toLowerCase().includes('pronto') && !justFuncMatch[1].toLowerCase().includes('defeito') && !justFuncMatch[1].toLowerCase().includes('uso')) {
-                     restante = restante.substring(0, restante.length - justFuncMatch[0].length).trim();
+                // Tenta achar [Estado] [Quantidade] (Sem funcionario)
+                let m3 = restante.match(/(pronto para uso|com defeito|em uso|danificado|reparo)\s+(\d{1,4})$/i);
+                if (m3) {
+                    estado = m3[1].trim(); qtd = m3[2].trim();
+                    restante = restante.substring(0, restante.length - m3[0].length).trim();
+                } else {
+                    // Tenta achar só [Quantidade]
+                    let m4 = restante.match(/\s+(\d{1,4})$/i);
+                    if (m4) {
+                        qtd = m4[1].trim();
+                        restante = restante.substring(0, restante.length - m4[0].length).trim();
+                    }
                 }
             }
         }
 
-        let estado = '-';
-        let estadoMatch = restante.match(/\s+(pronto para uso|com defeito|em uso|danificado|reparo)$/i);
-        if (estadoMatch) {
-            estado = estadoMatch[1];
-            restante = restante.substring(0, restante.length - estadoMatch[0].length).trim();
+        // Limpeza de sujeira de estado perdido
+        let mEstadoFim = restante.match(/\s+(pronto para uso|com defeito|em uso|danificado|reparo)$/i);
+        if(mEstadoFim && estado === '-') {
+            estado = mEstadoFim[1].trim();
+            restante = restante.substring(0, restante.length - mEstadoFim[0].length).trim();
         }
 
+        // 4. Separação de Item, NS e Subcategoria
         let subcategoria = '-';
         let itemNome = '-';
         let ns = '-';
 
-        let subConhecida = rastrearSubcategoria(restante);
-        
-        if (subConhecida) {
-            subcategoria = subConhecida;
-            ns = '-';
-            itemNome = restante.replace(subConhecida, '').trim() || subConhecida;
+        // Busca pela regra de ouro: O código de 10 dígitos.
+        let regex10 = /\b([123]\d{9})\b/g;
+        let matches10 = [...restante.matchAll(regex10)];
+
+        if (matches10.length > 0) {
+            // Usa o ÚLTIMO código de 10 dígitos encontrado como divisor de águas
+            let last10Match = matches10[matches10.length - 1];
+            subcategoria = restante.substring(last10Match.index).trim();
+            let antesDaSub = restante.substring(0, last10Match.index).trim();
+
+            if (antesDaSub.length > 0) {
+                // Checa se o texto ANTES da subcategoria pertence a um Item SEM NÚMERO DE SÉRIE
+                let ehSemNS = itensSemNS.some(kw => antesDaSub.toLowerCase().includes(kw));
+                if (ehSemNS) {
+                    itemNome = antesDaSub;
+                    ns = '-';
+                } else {
+                    // Se não for exceção, a última palavra antes da Subcategoria é o N/S!
+                    let parts = antesDaSub.split(/\s+/);
+                    if (parts.length > 1) {
+                        ns = parts.pop();
+                        itemNome = parts.join(' ');
+                    } else {
+                        ns = antesDaSub;
+                        itemNome = '-';
+                    }
+                }
+            } else {
+                itemNome = subcategoria;
+            }
         } else {
-            let regex10 = /\b[123]\d{9}\b/g;
-            let matches = [...restante.matchAll(regex10)];
-
-            if (matches.length > 0) {
-                let lastMatch = matches[matches.length - 1];
-                subcategoria = restante.substring(lastMatch.index).trim();
-                let antesDaSub = restante.substring(0, lastMatch.index).trim();
-
-                if (antesDaSub.length > 0) {
-                    let ehSemNS = itensSemNS.some(kw => antesDaSub.toLowerCase().includes(kw.toLowerCase()));
+            // Fallback caso a linha não tenha o código de 10 dígitos (Procura no Banco de Dados)
+            let subConhecida = rastrearSubcategoria(restante);
+            if (subConhecida) {
+                subcategoria = subConhecida;
+                let textBefore = restante.replace(subConhecida, '').trim();
+                
+                if (textBefore.length > 0) {
+                    let ehSemNS = itensSemNS.some(kw => textBefore.toLowerCase().includes(kw));
                     if (ehSemNS) {
-                        itemNome = antesDaSub;
+                        itemNome = textBefore;
                         ns = '-';
                     } else {
-                        let lastSpace = antesDaSub.lastIndexOf(' ');
-                        if (lastSpace !== -1) {
-                            ns = antesDaSub.substring(lastSpace + 1).trim();
-                            itemNome = antesDaSub.substring(0, lastSpace).trim();
+                        let parts = textBefore.split(/\s+/);
+                        if (parts.length > 1) {
+                            ns = parts.pop();
+                            itemNome = parts.join(' ');
                         } else {
-                            ns = antesDaSub;
-                            itemNome = '-';
+                            ns = textBefore;
                         }
                     }
                 } else {
-                    itemNome = subcategoria;
+                    itemNome = subConhecida;
                 }
             } else {
-                let ehSemNS = itensSemNS.some(kw => restante.toLowerCase().includes(kw.toLowerCase()));
+                // Última tentativa caso seja algo super fora do padrão
+                let ehSemNS = itensSemNS.some(kw => restante.toLowerCase().includes(kw));
                 if (ehSemNS) {
                     itemNome = restante;
                     subcategoria = restante;
                     ns = '-';
                 } else {
-                    let lastSpace = restante.lastIndexOf(' ');
-                    if (lastSpace !== -1) {
-                        ns = restante.substring(lastSpace + 1).trim();
-                        itemNome = restante.substring(0, lastSpace).trim();
+                    let parts = restante.split(/\s+/);
+                    if (parts.length > 1) {
+                        ns = parts.pop();
+                        itemNome = parts.join(' ');
                         subcategoria = itemNome;
                     } else {
                         itemNome = restante;
@@ -564,9 +603,13 @@
             }
         }
 
+        // Limpeza visual pra tabela não ficar feia com os tracinhos errados
+        itemNome = itemNome.replace(/\s+-\s*$/, '').trim();
+
         return { codigo, itemNome, ns, subcategoria, estado, qtd, funcionario, status };
     }
 
+    // --- LEITURA DO TEXTO COLADO E ARQUIVO TEXTO ---
     function processarTexto(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
@@ -596,6 +639,7 @@
         adicionarDados(novosDados);
     }
 
+    // --- LEITURA DO PDF DIRETAMENTE ---
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -610,6 +654,7 @@
                 let extractedStrings = [];
                 let currentString = "";
 
+                // Lê o PDF juntando textos espalhados em linhas contínuas e perfeitas
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
@@ -635,12 +680,10 @@
                         const rowItems = itemsByY[y].sort((a, b) => a.transform[4] - b.transform[4]);
                         const rowText = rowItems.map(item => item.str.trim()).join(' ');
                         
-                        // Se começar com um número de código, inicia uma nova linha de item
                         if (/^\d{4,8}(\s|$)/.test(rowText)) {
                             if (currentString) extractedStrings.push(currentString);
                             currentString = rowText;
                         } else if (currentString) {
-                            // Junta as partes que quebram a linha no PDF
                             currentString += " " + rowText;
                         }
                     });
