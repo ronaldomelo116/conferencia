@@ -613,7 +613,7 @@
         localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- LEITURA INTELIGENTE QUE FUNCIONA PARA TXT, CSV E O PDF EMBARALHADO ---
+    // --- NOVA LEITURA INTELIGENTE QUE RESOLVE A SUBCATEGORIA ---
     function processarConteudo(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         
@@ -642,9 +642,8 @@
             // Verifica se a linha começa com um código válido (só números, de 4 a 8 caracteres)
             if (codigo && /^\d{4,8}$/.test(codigo)) {
                 
-                // Mapeador de Inteligência Artificial: procura a coluna que tem o Número de Série
+                // Mapeador de IA: Encontra o Índice do Número de Série (Geralmente começa com FHTT)
                 let nsIndex = colunas.findIndex((c, i) => i > 0 && /^[A-Z0-9]{8,20}$/i.test(c) && /[A-Z]/i.test(c) && /[0-9]/.test(c));
-                // Caso seja muito específico e só tenha letras, força procurar pelo FHTT da Brisanet
                 if (nsIndex === -1) nsIndex = colunas.findIndex(c => c.toUpperCase().includes('FHTT'));
 
                 if (nsIndex !== -1) {
@@ -652,17 +651,36 @@
                     let itemNome = colunas.slice(1, nsIndex).join(' ').replace(/---/g, '').trim() || '-';
                     let ns = colunas[nsIndex];
                     
-                    // Localiza a coluna de Estado
-                    let estadoIndex = colunas.findIndex(c => c.toLowerCase().includes('pronto') || c.toLowerCase().includes('defeito') || c.toLowerCase().includes('uso'));
+                    // Localiza a coluna de Estado ("pronto para uso" ou "com defeito")
+                    let estadoIndex = colunas.findIndex((c, i) => i > nsIndex && (c.toLowerCase().includes('pronto') || c.toLowerCase().includes('defeito') || c.toLowerCase().includes('uso')));
+                    
+                    // A MÁGICA ACONTECE AQUI: A Subcategoria é TUDO o que estiver entre o N/S e o Estado!
+                    let subcategoria = '-';
+                    if (estadoIndex !== -1 && estadoIndex > nsIndex + 1) {
+                        subcategoria = colunas.slice(nsIndex + 1, estadoIndex).join(' ').trim();
+                    } else if (estadoIndex === -1 && colunas.length > nsIndex + 1) {
+                        // Caso a coluna de estado esteja vazia por algum motivo
+                        subcategoria = colunas[nsIndex + 1];
+                    }
+                    
                     let estado = estadoIndex !== -1 ? colunas[estadoIndex] : '-';
                     
-                    // Localiza o NS Interno (geralmente tem 12 a 16 dígitos e fica depois do NS principal)
-                    let nsInternoIndex = colunas.findIndex((c, i) => i > nsIndex && /^\d{12,16}$/.test(c));
-                    let nsInterno = nsInternoIndex !== -1 ? colunas[nsInternoIndex] : '-';
-                    
-                    // Localiza a Quantidade (número pequeno isolado)
-                    let qtdIndex = colunas.findIndex((c, i) => i > nsIndex && /^[0-9]{1,3}$/.test(c));
+                    // Localiza a Quantidade
+                    let qtdIndex = -1;
+                    if (estadoIndex !== -1) {
+                        qtdIndex = colunas.findIndex((c, i) => i > estadoIndex && /^[0-9]{1,3}$/.test(c));
+                    } else {
+                        qtdIndex = colunas.findIndex((c, i) => i > nsIndex + 1 && /^[0-9]{1,3}$/.test(c));
+                    }
                     let qtd = qtdIndex !== -1 ? colunas[qtdIndex] : '1';
+
+                    // O que sobrar depois da Quantidade é o Funcionario 
+                    let funcionario = '-';
+                    if (qtdIndex !== -1 && qtdIndex + 1 < colunas.length) {
+                        let funcStr = colunas.slice(qtdIndex + 1).join(' ').trim().toLowerCase();
+                        funcStr = funcStr.replace('pendente', '').replace('ok', '').replace(/---/g, '').trim();
+                        if (funcStr) funcionario = funcStr.toUpperCase();
+                    }
 
                     novosDados.push({
                         linhaOriginal: limpo,
@@ -671,13 +689,13 @@
                         dataConferencia: null,
                         colunasParseadas: [
                             codigo,
-                            '-', // Data (fica com traço por padrão até o usuário bipar)
+                            '-', // Data (preenchida ao bipar)
                             itemNome,
                             ns,
-                            nsInterno,
+                            subcategoria || '-', // Resolve a Subcategoria perfeitamente
                             estado,
                             qtd,
-                            '-' // Funcionario/Ação
+                            funcionario || '-'
                         ]
                     });
                 }
@@ -701,7 +719,6 @@
         if (!file) return;
         fileInput.value = ''; 
 
-        // SE O ARQUIVO FOR PDF...
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
             try {
                 btnCarregarTexto.textContent = "⏳ Lendo PDF...";
@@ -716,7 +733,6 @@
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
                     
-                    // Extrai número da transação perdido no PDF
                     const pageText = textContent.items.map(item => item.str).join(' ');
                     const matchT = pageText.match(/Transa[çc][ãa]o:\s*(\d+)/i);
                     if(matchT) {
@@ -724,7 +740,6 @@
                         localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
                     }
 
-                    // Agrupa as palavras que estão na mesma altura da linha (margem de erro de 6 pixels)
                     const itemsByY = {};
                     textContent.items.forEach(item => {
                         const str = item.str.trim();
@@ -734,7 +749,6 @@
                         itemsByY[y].push(item);
                     });
 
-                    // Junta a linha inteira colocando um Tab (\t) entre as colunas
                     const yKeys = Object.keys(itemsByY).sort((a, b) => b - a);
                     yKeys.forEach(y => {
                         const rowItems = itemsByY[y].sort((a, b) => a.transform[4] - b.transform[4]);
@@ -752,7 +766,6 @@
                 btnCarregarTexto.disabled = false;
             }
         } else {
-            // SE FOR TXT OU CSV
             const reader = new FileReader();
             reader.onload = function(e) {
                 processarConteudo(e.target.result);
@@ -811,7 +824,7 @@
         doc.setFontSize(11);
         doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
 
-        const tableColumn = ["Código", "Data Conf.", "Nome do Equipamento", "Nº Série", "NS Interno", "Estado", "Qtd", "Func./Ação", "Status"];
+        const tableColumn = ["Código", "Data Conf.", "Item", "N/S", "Subcategoria", "Estado", "Qtd", "Func./Ação", "Status"];
         const tableRows = [];
 
         estoqueDados.forEach(item => {
@@ -820,7 +833,7 @@
                 item.dataConferencia ? item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '') : '-',
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
-                item.colunasParseadas[4],
+                item.colunasParseadas[4], // Agora pega corretamente a Subcategoria
                 item.colunasParseadas[5],
                 item.colunasParseadas[6],
                 item.colunasParseadas[7],
@@ -880,7 +893,7 @@
                 item.dataConferencia || '-',
                 item.colunasParseadas[2],
                 item.colunasParseadas[3],
-                item.colunasParseadas[4],
+                item.colunasParseadas[4], // Renderiza a Subcategoria
                 item.colunasParseadas[5],
                 item.colunasParseadas[6],
                 item.colunasParseadas[7]
