@@ -14,7 +14,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <style>
-        /* --- VARIÁVEIS DE TEMA --- */
         :root {
             --bg-container: #202124;
             --bg-section: #303134;
@@ -84,9 +83,6 @@
             align-items: center;
             gap: 8px;
         }
-        .theme-toggle:hover {
-            transform: scale(1.05);
-        }
 
         .page-header {
             display: flex;
@@ -105,20 +101,7 @@
             font-weight: bold;
             text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
         }
-        .page-header a {
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s;
-            text-decoration: none;
-        }
-        .page-header a:hover {
-            transform: scale(1.08);
-        }
-        .logo-img {
-            height: 65px; 
-            width: auto;
-            border-radius: 50%;
-        }
+        .logo-img { height: 65px; width: auto; border-radius: 50%; }
 
         .container {
             max-width: 1400px;
@@ -153,10 +136,6 @@
             font-size: 16px;
             outline: none;
             width: 300px;
-            transition: box-shadow 0.2s;
-        }
-        .input-transacao:focus {
-            box-shadow: 0 0 5px rgba(138, 180, 248, 0.5);
         }
         
         .painel-contagem {
@@ -168,11 +147,7 @@
             color: var(--text-title);
             white-space: nowrap;
         }
-        .painel-contagem span {
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 24px;
-        }
+        .painel-contagem span { color: var(--primary-color); font-weight: bold; font-size: 24px; }
 
         .upload-section {
             background-color: var(--bg-section);
@@ -181,263 +156,70 @@
             margin-bottom: 20px;
             border: 1px solid var(--border-color);
         }
-        .upload-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        input[type="file"] {
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-        .btn-limpar, .btn-pdf {
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
+        .upload-controls { display: flex; align-items: center; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        input[type="file"] { color: var(--primary-color); font-size: 16px; }
+        .btn-limpar, .btn-pdf, .btn-carregar {
+            border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; color: white;
         }
         .btn-limpar { background-color: #c5221f; }
-        .btn-limpar:hover { background-color: #a51b19; }
         .btn-pdf { background-color: #137333; }
-        .btn-pdf:hover { background-color: #0d5022; }
+        .btn-carregar { background-color: var(--primary-color); margin-top: 10px; }
         
-        .btn-limpar:disabled, .btn-pdf:disabled {
-            background-color: var(--badge-bg);
-            color: var(--text-muted);
-            cursor: not-allowed;
+        .btn-limpar:disabled, .btn-pdf:disabled, .btn-carregar:disabled {
+            background-color: var(--badge-bg); color: var(--text-muted); cursor: not-allowed;
         }
         
         .paste-area {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 6px;
-            margin-top: 15px;
-            box-sizing: border-box;
-            font-family: monospace;
-            resize: vertical;
-            min-height: 80px;
-        }
-        .paste-area:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-        .btn-carregar {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: filter 0.2s;
-            margin-top: 10px;
-        }
-        .btn-carregar:hover { filter: brightness(1.1); }
-        .btn-carregar:disabled {
-            background-color: var(--badge-bg);
-            cursor: not-allowed;
+            width: 100%; padding: 12px; background-color: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);
+            border-radius: 6px; margin-top: 15px; box-sizing: border-box; font-family: monospace; resize: vertical; min-height: 80px;
         }
 
         .search-bar {
-            width: 100%;
-            padding: 15px;
-            font-size: 24px;
-            background-color: var(--bg-input);
-            border: 2px solid var(--primary-color);
-            color: var(--text-main);
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            outline: none;
-        }
-        .search-bar:focus {
-            box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
+            width: 100%; padding: 15px; font-size: 24px; background-color: var(--bg-input); border: 2px solid var(--primary-color);
+            color: var(--text-main); border-radius: 8px; box-sizing: border-box; margin-bottom: 20px; outline: none;
         }
         
-        #alert-box {
-            display: none;
-            background-color: #fce8e6;
-            color: #c5221f;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #c5221f;
+        #alert-box, #alert-warning {
+            display: none; padding: 15px; font-size: 20px; font-weight: bold; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 2px solid;
         }
-        #alert-warning {
-            display: none;
-            background-color: #fef7e0;
-            color: #b06000;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #fbbc04;
-        }
+        #alert-box { background-color: #fce8e6; color: #c5221f; border-color: #c5221f; }
+        #alert-warning { background-color: #fef7e0; color: #b06000; border-color: #fbbc04; }
         
         #info-filtro {
-            display: none;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 6px solid transparent;
+            display: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid transparent;
         }
-        .info-filtro-encontrado {
-            background-color: var(--filtro-bg) !important;
-            color: var(--filtro-text) !important;
-            border-left-color: #fbbc04 !important;
-        }
-        .info-filtro-erro {
-            background-color: #fce8e6 !important;
-            color: #c5221f !important;
-            border-left-color: #c5221f !important;
-        }
+        .info-filtro-encontrado { background-color: var(--filtro-bg) !important; color: var(--filtro-text) !important; border-left-color: #fbbc04 !important; }
+        .info-filtro-erro { background-color: #fce8e6 !important; color: #c5221f !important; border-left-color: #c5221f !important; }
 
-        .tabela-container {
-            background-color: var(--bg-section);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        .list-header {
-            display: flex;
-            background-color: var(--list-header);
-            padding: 15px;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            user-select: none;
-        }
-
-        .sortable {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s;
-        }
-        .sortable:hover { color: var(--text-title); }
+        .tabela-container { background-color: var(--bg-section); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
+        .list-header { display: flex; background-color: var(--list-header); padding: 15px; border-bottom: 2px solid var(--border-color); font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; user-select: none; }
+        .sortable { cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .sort-icon { font-size: 10px; opacity: 0.4; }
         .sortable.active .sort-icon { opacity: 1; color: var(--primary-color); }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 600px;
-            overflow-y: auto;
-            background-color: transparent;
-        }
-        li {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            display: flex; 
-            align-items: center;
-            transition: background-color 0.2s ease;
-        }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 600px; overflow-y: auto; }
+        li { padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-size: 14px; display: flex; align-items: center; }
         li:last-child { border-bottom: none; }
-        .mensagem-vazia {
-            color: var(--text-muted);
-            text-align: center;
-            justify-content: center;
-            width: 100%;
-        }
+        .mensagem-vazia { color: var(--text-muted); text-align: center; justify-content: center; width: 100%; }
         
-        .grid-row {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 0.8fr 1fr 3fr 1.5fr 1.5fr 1fr 0.6fr 1fr;
-            gap: 15px;
-            align-items: center;
-            padding-right: 15px;
-        }
-        .col-text {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .col-ns {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
+        .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3fr 1.5fr 1.5fr 1fr 0.6fr 1fr; gap: 15px; align-items: center; padding-right: 15px; }
+        .col-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .col-ns { color: var(--primary-color); font-weight: bold; }
 
-        .destaque-busca {
-            background-color: var(--highlight-bg) !important;
-            border-left: 8px solid #fbbc04;
-        }
-        .verificado {
-            background-color: #137333 !important;
-            color: #fff;
-            border-left: 8px solid #137333;
-        }
+        .destaque-busca { background-color: var(--highlight-bg) !important; border-left: 8px solid #fbbc04; }
+        .verificado { background-color: #137333 !important; color: #fff; border-left: 8px solid #137333; }
         .verificado .col-text, .verificado .col-ns { color: #fff !important; }
         
-        @keyframes piscarAmarelo {
-            0% { background-color: #137333; border-left-color: #137333; }
-            50% { background-color: #b06000; border-left-color: #fbbc04; }
-            100% { background-color: #137333; border-left-color: #137333; }
-        }
+        @keyframes piscarAmarelo { 0%, 100% { background-color: #137333; border-left-color: #137333; } 50% { background-color: #b06000; border-left-color: #fbbc04; } }
         .piscar-aviso { animation: piscarAmarelo 0.8s infinite !important; }
 
-        .status-container {
-            width: 80px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-        }
-        .status-badge {
-            font-size: 13px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            background-color: var(--badge-bg);
-            color: var(--badge-text);
-            font-weight: bold;
-            white-space: nowrap;
-            display: inline-block;
-        }
-        .verificado .status-badge {
-            background-color: #ceead6;
-            color: #137333;
-        }
+        .status-container { width: 80px; display: flex; justify-content: flex-end; align-items: center; }
+        .status-badge { font-size: 13px; padding: 6px 10px; border-radius: 4px; background-color: var(--badge-bg); color: var(--badge-text); font-weight: bold; }
+        .verificado .status-badge { background-color: #ceead6; color: #137333; }
 
-        .footer {
-            max-width: 1400px;
-            width: 100%;
-            margin: 20px auto 0 auto;
-            background-color: var(--bg-container);
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-            line-height: 1.6;
-            box-sizing: border-box;
-            transition: background-color 0.3s ease;
-        }
-        .footer p { margin: 5px 0; }
+        .footer { max-width: 1400px; width: 100%; margin: 20px auto 0 auto; background-color: var(--bg-container); padding: 20px 30px; border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 14px; box-sizing: border-box; }
         .footer-lembrete { color: #fbbc04; font-weight: bold; margin-top: 10px; }
         .footer a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
-        .footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -461,13 +243,11 @@
     
     <div class="upload-section">
         <label>1. Envie o arquivo da tabela (TXT, CSV ou <strong>PDF</strong>) OU cole os dados diretamente abaixo:</label>
-        
         <div class="upload-controls">
             <input type="file" id="txtFile" accept=".txt, .csv, .pdf">
             <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
             <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
         </div>
-        
         <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
         <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
     </div>
@@ -494,25 +274,19 @@
                 Status <span class="sort-icon">↕</span>
             </div>
         </div>
-
         <ul id="nsList">
-            <li id="mensagemVazia" class="mensagem-vazia">
-                Os itens da transação aparecerão aqui organizados em colunas.
-            </li>
+            <li id="mensagemVazia" class="mensagem-vazia">Os itens da transação aparecerão aqui organizados em colunas.</li>
         </ul>
     </div>
 </div>
 
 <div class="footer">
     <p>&copy; 2026 Conferência de Estoque. Todos os direitos reservados. Criado por Ronaldo Melo</p>
-    <p class="footer-lembrete">
-        Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail 
-        <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a>
-    </p>
+    <p class="footer-lembrete">Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a></p>
 </div>
 
 <script>
-    // --- CORREÇÃO DO BLOQUEIO DE SEGURANÇA (CORS) DO PDF.JS ---
+    // Configuração do PDF.JS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -528,16 +302,14 @@
     atualizarBotaoTema(savedTheme);
 
     themeToggleBtn.addEventListener('click', () => {
-        let currentTheme = document.documentElement.getAttribute('data-theme');
-        let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        let newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('themeBrisanet', newTheme);
         atualizarBotaoTema(newTheme);
     });
 
     function atualizarBotaoTema(theme) {
-        if (theme === 'light') themeToggleBtn.innerHTML = '🌙 Modo Escuro';
-        else themeToggleBtn.innerHTML = '☀️ Modo Claro';
+        themeToggleBtn.innerHTML = theme === 'light' ? '🌙 Modo Escuro' : '☀️ Modo Claro';
     }
 
     const fileInput = document.getElementById('txtFile');
@@ -555,65 +327,36 @@
     const pasteArea = document.getElementById('pasteArea');
     const btnCarregarTexto = document.getElementById('btnCarregarTexto');
 
-    let totalItens = 0;
-    let itensBipados = 0;
-    let typingTimer;
+    let totalItens = 0, itensBipados = 0, typingTimer, currentSortColumn = -1, currentSortDirection = 'asc', estoqueDados = []; 
     const tempoDeEspera = 150; 
-    let estoqueDados = []; 
-    let currentSortColumn = -1;
-    let currentSortDirection = 'asc';
 
     window.onload = function() {
         const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
         if (dadosSalvos) {
             estoqueDados = JSON.parse(dadosSalvos);
-            if (estoqueDados.length > 0) {
-                renderizarDaMemoria();
-                btnLimpar.disabled = false;
-                btnBaixarPDF.disabled = false;
-            }
+            if (estoqueDados.length > 0) { renderizarDaMemoria(); btnLimpar.disabled = false; btnBaixarPDF.disabled = false; }
         }
         const transacaoSalva = localStorage.getItem('codigoTransacaoBrisanet');
         if (transacaoSalva) inputTransacao.value = transacaoSalva;
     };
 
-    function salvarNaMemoria() {
-        localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
-    }
+    function salvarNaMemoria() { localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados)); }
 
-    inputTransacao.addEventListener('input', function() {
-        localStorage.setItem('codigoTransacaoBrisanet', this.value.trim());
-    });
+    inputTransacao.addEventListener('input', function() { localStorage.setItem('codigoTransacaoBrisanet', this.value.trim()); });
 
     btnLimpar.addEventListener('click', function() {
         nsList.innerHTML = '<li id="mensagemVazia" class="mensagem-vazia">Os itens da transação aparecerão aqui organizados em colunas.</li>';
         listHeader.style.display = 'none'; 
-        totalItens = 0;
-        itensBipados = 0;
-        spanTotal.textContent = totalItens;
-        spanBipados.textContent = itensBipados;
-        spanBipados.style.color = 'var(--primary-color)'; 
-        fileInput.value = '';
-        pasteArea.value = ''; 
-        searchBar.value = '';
-        searchBar.disabled = true;
-        btnLimpar.disabled = true;
-        btnBaixarPDF.disabled = true; 
-        inputTransacao.value = '';
+        totalItens = 0; itensBipados = 0; spanTotal.textContent = 0; spanBipados.textContent = 0; spanBipados.style.color = 'var(--primary-color)'; 
+        fileInput.value = ''; pasteArea.value = ''; searchBar.value = ''; searchBar.disabled = true;
+        btnLimpar.disabled = true; btnBaixarPDF.disabled = true; inputTransacao.value = '';
         localStorage.removeItem('codigoTransacaoBrisanet');
-        alertBox.style.display = 'none';
-        alertWarning.style.display = 'none';
-        infoFiltro.style.display = 'none';
-        document.querySelectorAll('.sortable').forEach(h => {
-            h.classList.remove('active');
-            h.querySelector('.sort-icon').textContent = '↕';
-        });
-        currentSortColumn = -1;
-        estoqueDados = [];
-        localStorage.removeItem('dadosConferenciaBrisanet');
+        alertBox.style.display = 'none'; alertWarning.style.display = 'none'; infoFiltro.style.display = 'none';
+        document.querySelectorAll('.sortable').forEach(h => { h.classList.remove('active'); h.querySelector('.sort-icon').textContent = '↕'; });
+        currentSortColumn = -1; estoqueDados = []; localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- LEITURA BLINDADA (Lê N/S e Subcategoria sem depender de RegEx estrito) ---
+    // --- NOVA LEITURA DE TRÁS PARA FRENTE ---
     function processarConteudo(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         
@@ -639,82 +382,92 @@
 
             if (codigo && /^\d{4,8}$/.test(codigo)) {
                 
-                // 1. ACHA A COLUNA DO ESTADO PARA USAR DE ÂNCORA (Sempre será Pronto, Defeito ou Uso)
-                let estadoIndex = -1;
-                for (let i = colunas.length - 1; i >= 3; i--) {
-                    let c = colunas[i].toLowerCase();
-                    if (c.includes('pronto') || c.includes('defeito') || c.includes('uso')) {
-                        estadoIndex = i;
-                        break;
-                    }
+                // Variáveis base que queremos preencher
+                let estado = '-';
+                let subcategoria = '-';
+                let ns = '-';
+                let itemNome = '-';
+                let qtd = '1';
+                let funcionario = '-';
+
+                // Lendo de TRÁS PARA FRENTE para alinhar perfeitamente
+                let p = colunas.length - 1;
+
+                // 1. Pula o "Status" (Confirmado/Pendente) se existir no final da linha
+                if (colunas[p] && (colunas[p].toLowerCase().includes('confirmado') || colunas[p].toLowerCase().includes('pendente') || colunas[p].toLowerCase().includes('cancelado'))) {
+                    p--;
                 }
 
-                if (estadoIndex !== -1) {
-                    let valE1 = colunas[estadoIndex - 1]; // Provável Subcategoria
-                    let valE2 = colunas[estadoIndex - 2]; // Provável N/S
+                // 2. Extrai Funcionário
+                if (p >= 1 && isNaN(parseInt(colunas[p])) && colunas[p].length > 5) {
+                    funcionario = colunas[p].toUpperCase();
+                    p--;
+                }
 
-                    // Função simples para ver se tem cara de Número de Série
+                // 3. Extrai Quantidade (Sempre é um número pequeno isolado)
+                if (p >= 1 && /^[0-9]{1,4}$/.test(colunas[p])) {
+                    qtd = colunas[p];
+                    p--;
+                }
+
+                // 4. Extrai Estado (Se existir: Pronto, Defeito, Uso)
+                if (p >= 1 && (colunas[p].toLowerCase().includes('pronto') || colunas[p].toLowerCase().includes('defeito') || colunas[p].toLowerCase().includes('uso'))) {
+                    estado = colunas[p];
+                    p--;
+                }
+
+                // 5. O que vier antes do Estado (ou Quantidade) é a Subcategoria, garantido!
+                if (p >= 1) {
+                    subcategoria = colunas[p];
+                    p--;
+                }
+
+                // 6. O próximo pode ser o N/S ou já ser o Item se for um parafuso/cabo.
+                if (p >= 1) {
                     let isLikelyNS = (str) => {
-                        if (!str) return false;
                         str = str.toUpperCase();
                         if (/^(FHTT|ZTEG|HWTC|ALCL|CMDC)/.test(str)) return true;
-                        if (/^[A-Z0-9]{8,24}$/.test(str)) return true;
+                        // Regra de NS misturando letras e numeros
+                        if (/^[A-Z0-9]{8,24}$/.test(str) && /[A-Z]/.test(str) && /[0-9]/.test(str)) return true;
                         return false;
                     };
-
-                    let ns = '-';
-                    let subcategoria = '-';
-                    let itemNome = '-';
-
-                    // Inteligência: Se a Subcategoria tiver sumido (coluna em branco no sistema), 
-                    // o E-1 será o N/S e o E-2 será um pedaço do nome do item.
-                    if (isLikelyNS(valE1) && !isLikelyNS(valE2)) {
-                        ns = valE1;
-                        subcategoria = '-';
-                        itemNome = colunas.slice(1, estadoIndex - 1).join(' ').replace(/---/g, '').trim();
-                    } else {
-                        // Comportamento normal: E-2 é N/S, E-1 é Subcategoria (seja número, letra, espaço, etc)
-                        ns = valE2;
-                        subcategoria = valE1;
-                        itemNome = colunas.slice(1, estadoIndex - 2).join(' ').replace(/---/g, '').trim();
-                    }
-
-                    let estado = colunas[estadoIndex];
-                    let qtd = colunas[estadoIndex + 1] || '1';
                     
-                    let funcionario = '-';
-                    if (colunas.length > estadoIndex + 2) {
-                        let f = colunas.slice(estadoIndex + 2).join(' ').toLowerCase();
-                        f = f.replace(/pendente/g, '').replace(/ok/g, '').replace(/---/g, '').trim();
-                        if (f) funcionario = f.toUpperCase();
+                    if (isLikelyNS(colunas[p]) || (colunas.length > 5 && p > 1)) {
+                        ns = colunas[p];
+                        p--;
                     }
-
-                    novosDados.push({
-                        linhaOriginal: limpo,
-                        linhaUpper: limpo.toUpperCase(),
-                        verificado: false,
-                        dataConferencia: null,
-                        colunasParseadas: [
-                            codigo,
-                            '-',
-                            itemNome || '-',
-                            ns || '-',
-                            subcategoria || '-', // A subcategoria numérica entra aqui perfeitamente!
-                            estado || '-',
-                            qtd,
-                            funcionario
-                        ]
-                    });
                 }
+
+                // 7. O que sobrou entre o Código e o ponteiro atual é o Nome do Item!
+                if (p >= 1) {
+                    itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim();
+                } else {
+                    itemNome = colunas[1] || '-';
+                }
+
+                novosDados.push({
+                    linhaOriginal: limpo,
+                    linhaUpper: limpo.toUpperCase(),
+                    verificado: false,
+                    dataConferencia: null,
+                    colunasParseadas: [
+                        codigo,
+                        '-',
+                        itemNome || '-',
+                        ns || '-',
+                        subcategoria || '-',
+                        estado || '-',
+                        qtd,
+                        funcionario || '-'
+                    ]
+                });
             }
         });
 
         if(novosDados.length > 0) {
             estoqueDados = estoqueDados.concat(novosDados);
-            salvarNaMemoria(); 
-            renderizarDaMemoria(); 
-            btnLimpar.disabled = false;
-            btnBaixarPDF.disabled = false; 
+            salvarNaMemoria(); renderizarDaMemoria(); 
+            btnLimpar.disabled = false; btnBaixarPDF.disabled = false; 
         } else if (content.length > 15) {
             alert("Nenhum equipamento válido foi encontrado no arquivo.");
         }
@@ -728,9 +481,7 @@
 
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
             try {
-                btnCarregarTexto.textContent = "⏳ Lendo PDF...";
-                btnCarregarTexto.disabled = true;
-                
+                btnCarregarTexto.textContent = "⏳ Lendo PDF..."; btnCarregarTexto.disabled = true;
                 const arrayBuffer = await file.arrayBuffer();
                 const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
                 const pdf = await loadingTask.promise;
@@ -743,8 +494,7 @@
                     const pageText = textContent.items.map(item => item.str).join(' ');
                     const matchT = pageText.match(/Transa[çc][ãa]o:\s*(\d+)/i);
                     if(matchT) {
-                        inputTransacao.value = matchT[1];
-                        localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
+                        inputTransacao.value = matchT[1]; localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
                     }
 
                     const itemsByY = {};
@@ -764,46 +514,31 @@
                     });
                 }
                 processarConteudo(fullTextLines.join('\n'));
-                
             } catch (error) {
-                console.error(error);
-                alert(`Erro ao ler o arquivo PDF:\n${error.message}\n\nTente copiar a tabela e colar o texto na caixa abaixo.`);
+                console.error(error); alert(`Erro ao ler o arquivo PDF:\n${error.message}\n\nTente copiar a tabela e colar o texto na caixa abaixo.`);
             } finally {
-                btnCarregarTexto.innerHTML = "📥 Carregar Texto Colado";
-                btnCarregarTexto.disabled = false;
+                btnCarregarTexto.innerHTML = "📥 Carregar Texto Colado"; btnCarregarTexto.disabled = false;
             }
         } else {
             const reader = new FileReader();
-            reader.onload = function(e) {
-                processarConteudo(e.target.result);
-            };
+            reader.onload = function(e) { processarConteudo(e.target.result); };
             reader.readAsText(file);
         }
     });
 
     btnCarregarTexto.addEventListener('click', function() {
         const textoColado = pasteArea.value;
-        if (!textoColado.trim()) {
-            alert('Por favor, cole os dados da tabela na caixa de texto primeiro!');
-            pasteArea.focus();
-            return;
-        }
+        if (!textoColado.trim()) { alert('Por favor, cole os dados da tabela na caixa de texto primeiro!'); pasteArea.focus(); return; }
         processarConteudo(textoColado);
     });
 
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', () => {
             const colIndex = parseInt(header.dataset.col);
-            if (currentSortColumn === colIndex) {
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortColumn = colIndex;
-                currentSortDirection = 'asc';
-            }
-            document.querySelectorAll('.sortable').forEach(h => {
-                h.classList.remove('active');
-                h.querySelector('.sort-icon').textContent = '↕';
-            });
+            if (currentSortColumn === colIndex) currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            else { currentSortColumn = colIndex; currentSortDirection = 'asc'; }
+            
+            document.querySelectorAll('.sortable').forEach(h => { h.classList.remove('active'); h.querySelector('.sort-icon').textContent = '↕'; });
             header.classList.add('active');
             header.querySelector('.sort-icon').textContent = currentSortDirection === 'asc' ? '▲' : '▼';
             renderizarDaMemoria();
@@ -813,176 +548,101 @@
     function getColValue(item, colIndex) {
         if (colIndex === 8) return item.verificado ? 'OK' : 'Pendente';
         if (colIndex === 1) return item.dataConferencia ? item.dataConferencia.replace(/<[^>]*>?/gm, ' ') : '-';
-        let mapIndex = colIndex;
-        if (colIndex >= 2) mapIndex = colIndex - 1;
+        let mapIndex = colIndex >= 2 ? colIndex - 1 : colIndex;
         return item.colunasParseadas[mapIndex] || '-';
     }
 
     btnBaixarPDF.addEventListener('click', function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('landscape'); 
+        const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape'); 
         doc.setFontSize(16);
-        
         const codTransacao = inputTransacao.value.trim();
         let tituloPDF = "Relatório de Conferência de Estoque";
         if (codTransacao) tituloPDF += ` - Transação: ${codTransacao}`;
         doc.text(tituloPDF, 14, 15);
-        
         doc.setFontSize(11);
         doc.text(`Total de Itens: ${totalItens}  |  Conferidos: ${itensBipados}  |  Pendentes: ${totalItens - itensBipados}`, 14, 23);
 
         const tableColumn = ["Código", "Data Conf.", "Item", "N/S", "Subcategoria", "Estado", "Qtd", "Func./Ação", "Status"];
-        const tableRows = [];
-
-        estoqueDados.forEach(item => {
-            let rowData = [
-                item.colunasParseadas[0],
-                item.dataConferencia ? item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '') : '-',
-                item.colunasParseadas[2],
-                item.colunasParseadas[3],
-                item.colunasParseadas[4], 
-                item.colunasParseadas[5],
-                item.colunasParseadas[6],
-                item.colunasParseadas[7],
-                item.verificado ? 'OK' : 'Pendente'
-            ];
-            tableRows.push(rowData);
-        });
+        const tableRows = estoqueDados.map(item => [
+            item.colunasParseadas[0],
+            item.dataConferencia ? item.dataConferencia.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '') : '-',
+            item.colunasParseadas[2], item.colunasParseadas[3], item.colunasParseadas[4], 
+            item.colunasParseadas[5], item.colunasParseadas[6], item.colunasParseadas[7],
+            item.verificado ? 'OK' : 'Pendente'
+        ]);
 
         doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 28,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [243, 112, 33] },
+            head: [tableColumn], body: tableRows, startY: 28, styles: { fontSize: 8 }, headStyles: { fillColor: [243, 112, 33] },
             didParseCell: function(data) {
                 if (data.column.index === 8) {
-                    if (data.cell.raw === 'OK') {
-                        data.cell.styles.textColor = [19, 115, 51]; 
-                        data.cell.styles.fontStyle = 'bold';
-                    } else {
-                        data.cell.styles.textColor = [197, 34, 31]; 
-                        data.cell.styles.fontStyle = 'bold';
-                    }
+                    data.cell.styles.textColor = data.cell.raw === 'OK' ? [19, 115, 51] : [197, 34, 31]; 
+                    data.cell.styles.fontStyle = 'bold';
                 }
             }
         });
 
         const hoje = new Date();
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const ano = hoje.getFullYear();
-        let fileName = codTransacao ? `Transacao_${codTransacao}_${dia}-${mes}-${ano}.pdf` : `Relatorio_Estoque_${dia}-${mes}-${ano}.pdf`;
-        doc.save(fileName);
+        const nome = codTransacao ? `Transacao_${codTransacao}_${String(hoje.getDate()).padStart(2, '0')}-${String(hoje.getMonth()+1).padStart(2, '0')}.pdf` : `Relatorio_Estoque.pdf`;
+        doc.save(nome);
     });
 
     function renderizarDaMemoria() {
-        nsList.innerHTML = ''; 
-        listHeader.style.display = 'flex'; 
-        totalItens = estoqueDados.length;
-        itensBipados = estoqueDados.filter(item => item.verificado).length; 
-        spanTotal.textContent = totalItens;
-        spanBipados.textContent = itensBipados;
+        nsList.innerHTML = ''; listHeader.style.display = 'flex'; 
+        totalItens = estoqueDados.length; itensBipados = estoqueDados.filter(item => item.verificado).length; 
+        spanTotal.textContent = totalItens; spanBipados.textContent = itensBipados;
         spanBipados.style.color = (itensBipados === totalItens && totalItens > 0) ? '#137333' : 'var(--primary-color)'; 
 
         if (currentSortColumn !== -1) {
             estoqueDados.sort((a, b) => {
-                let valA = getColValue(a, currentSortColumn);
-                let valB = getColValue(b, currentSortColumn);
-                if (currentSortDirection === 'asc') return valA.localeCompare(valB, undefined, {numeric: true, sensitivity: 'base'});
-                else return valB.localeCompare(valA, undefined, {numeric: true, sensitivity: 'base'});
+                let valA = getColValue(a, currentSortColumn), valB = getColValue(b, currentSortColumn);
+                return currentSortDirection === 'asc' ? valA.localeCompare(valB, undefined, {numeric: true}) : valB.localeCompare(valA, undefined, {numeric: true});
             });
         }
 
         estoqueDados.forEach((item, index) => {
             const displayData = [
-                item.colunasParseadas[0],
-                item.dataConferencia || '-',
-                item.colunasParseadas[2],
-                item.colunasParseadas[3],
-                item.colunasParseadas[4], 
-                item.colunasParseadas[5],
-                item.colunasParseadas[6],
-                item.colunasParseadas[7]
+                item.colunasParseadas[0], item.dataConferencia || '-', item.colunasParseadas[2], item.colunasParseadas[3],
+                item.colunasParseadas[4], item.colunasParseadas[5], item.colunasParseadas[6], item.colunasParseadas[7]
             ];
 
-            let colsHTML = '';
-            for(let i = 0; i < 8; i++) {
-                let valor = displayData[i];
-                if(i === 1 && valor !== '-') { 
-                    let titleAjustado = valor.replace(/<[^>]*>?/gm, ' ');
-                    colsHTML += `<div class="col-text" style="white-space: normal; line-height: 1.3; font-size: 13px;" title="${titleAjustado}">${valor}</div>`;
-                } else if(i === 3) { 
-                    colsHTML += `<div class="col-text col-ns" title="${valor}">${valor}</div>`;
-                } else { 
-                    colsHTML += `<div class="col-text" title="${valor}">${valor}</div>`;
-                }
-            }
+            let colsHTML = displayData.map((v, i) => {
+                if(i === 1 && v !== '-') return `<div class="col-text" style="white-space: normal; line-height: 1.3; font-size: 13px;" title="${v.replace(/<[^>]*>?/gm, ' ')}">${v}</div>`;
+                if(i === 3) return `<div class="col-text col-ns" title="${v}">${v}</div>`;
+                return `<div class="col-text" title="${v}">${v}</div>`;
+            }).join('');
 
             const li = document.createElement('li');
-            li.dataset.index = index; 
-            li.dataset.linhaRaw = item.linhaUpper; 
-            
-            if (item.verificado) {
-                li.classList.add('verificado');
-                li.innerHTML = `<div class="grid-row">${colsHTML}</div><div class="status-container"><span class="status-badge">OK</span></div>`;
-            } else {
-                li.innerHTML = `<div class="grid-row">${colsHTML}</div><div class="status-container"><span class="status-badge">Pendente</span></div>`;
-            }
+            li.dataset.index = index; li.dataset.linhaRaw = item.linhaUpper; 
+            li.className = item.verificado ? 'verificado' : '';
+            li.innerHTML = `<div class="grid-row">${colsHTML}</div><div class="status-container"><span class="status-badge">${item.verificado ? 'OK' : 'Pendente'}</span></div>`;
             nsList.appendChild(li);
         });
 
-        searchBar.disabled = false;
-        searchBar.focus();
+        searchBar.disabled = false; searchBar.focus();
         if (searchBar.value.trim() !== '') searchBar.dispatchEvent(new Event('input')); 
     }
 
     searchBar.addEventListener('input', function() {
-        clearTimeout(typingTimer); 
-        const termo = this.value.trim().toUpperCase();
-        const items = nsList.querySelectorAll('li');
-        
-        alertBox.style.display = 'none';
-        alertWarning.style.display = 'none';
-        infoFiltro.style.display = 'none';
+        clearTimeout(typingTimer); const termo = this.value.trim().toUpperCase(); const items = nsList.querySelectorAll('li');
+        alertBox.style.display = 'none'; alertWarning.style.display = 'none'; infoFiltro.style.display = 'none';
 
-        if (!termo) {
-            items.forEach(li => {
-                li.classList.remove('destaque-busca', 'piscar-aviso');
-                if (li.id !== 'mensagemVazia') li.style.display = 'flex'; 
-            });
-            return;
-        }
+        if (!termo) { items.forEach(li => { li.classList.remove('destaque-busca', 'piscar-aviso'); if (li.id !== 'mensagemVazia') li.style.display = 'flex'; }); return; }
 
-        let pendentes = [];
-        let jaVerificados = [];
-        let totalEncontrados = 0;
-
+        let pendentes = [], jaVerificados = [], total = 0;
         items.forEach(li => {
             li.classList.remove('destaque-busca', 'piscar-aviso');
             if (li.dataset.linhaRaw.includes(termo)) {
-                totalEncontrados++;
-                li.style.display = 'flex'; 
-                if (!li.classList.contains('verificado')) pendentes.push(li);
+                total++; li.style.display = 'flex'; 
+                if (!li.classList.contains('verificado')) { pendentes.push(li); li.classList.add('destaque-busca'); }
                 else jaVerificados.push(li);
-            } else {
-                li.style.display = 'none';
-            }
+            } else li.style.display = 'none';
         });
 
-        if (totalEncontrados > 0) {
-            infoFiltro.innerHTML = `🔍 Mostrando <strong>${totalEncontrados}</strong> item(ns) encontrado(s) com "${termo}".`;
-            infoFiltro.style.display = 'block';
-            infoFiltro.className = 'info-filtro-encontrado'; 
-        } else {
-            infoFiltro.innerHTML = `⚠️ Nenhum item correspondente para "<strong>${termo}</strong>".`;
-            infoFiltro.style.display = 'block';
-            infoFiltro.className = 'info-filtro-erro'; 
-        }
+        if (total > 0) { infoFiltro.innerHTML = `🔍 Mostrando <strong>${total}</strong> item(ns) encontrado(s) com "${termo}".`; infoFiltro.style.display = 'block'; infoFiltro.className = 'info-filtro-encontrado'; }
+        else { infoFiltro.innerHTML = `⚠️ Nenhum item correspondente para "<strong>${termo}</strong>".`; infoFiltro.style.display = 'block'; infoFiltro.className = 'info-filtro-erro'; }
 
         typingTimer = setTimeout(() => {
-            const pareceCodigoBarras = !termo.includes(' ') && termo.length >= 4;
-            if (pareceCodigoBarras) {
+            if (!termo.includes(' ') && termo.length >= 4) {
                 if (pendentes.length === 1) confirmarItem(pendentes[0], pendentes[0].dataset.index);
                 else if (pendentes.length === 0 && jaVerificados.length === 1) dispararAvisoVerificado(jaVerificados[0]);
             }
@@ -991,82 +651,38 @@
 
     searchBar.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
-            e.preventDefault();
-            clearTimeout(typingTimer);
-            const termo = this.value.trim().toUpperCase();
-            if (!termo) return;
-
-            const items = nsList.querySelectorAll('li');
-            let matchPendente = null;
-            let matchVerificado = null;
-
+            e.preventDefault(); clearTimeout(typingTimer); const termo = this.value.trim().toUpperCase(); if (!termo) return;
+            const items = nsList.querySelectorAll('li'); let mPendente = null, mVerificado = null;
             items.forEach(li => {
                 if (li.dataset.linhaRaw.includes(termo)) {
-                    if (!li.classList.contains('verificado')) {
-                        if (!matchPendente) matchPendente = li; 
-                    } else {
-                        if (!matchVerificado) matchVerificado = li;
-                    }
+                    if (!li.classList.contains('verificado')) { if (!mPendente) mPendente = li; }
+                    else { if (!mVerificado) mVerificado = li; }
                 }
             });
-
-            if (matchPendente) confirmarItem(matchPendente, matchPendente.dataset.index);
-            else if (matchVerificado) dispararAvisoVerificado(matchVerificado);
-            else dispararErro(); 
+            if (mPendente) confirmarItem(mPendente, mPendente.dataset.index);
+            else if (mVerificado) dispararAvisoVerificado(mVerificado); else dispararErro(); 
         }
     });
 
     function confirmarItem(li, index) {
-        li.classList.remove('destaque-busca');
-        li.classList.add('verificado');
-        li.querySelector('.status-badge').textContent = 'OK';
-        
-        const dataAtual = new Date();
-        const dataStr = dataAtual.toLocaleDateString('pt-BR');
-        const horaStr = dataAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const dataFormatada = `${dataStr}<br><span style="font-size: 0.9em; opacity: 0.85;">${horaStr}</span>`;
-        
-        estoqueDados[index].verificado = true;
-        estoqueDados[index].dataConferencia = dataFormatada;
-        salvarNaMemoria();
-
-        const colunasDOM = li.querySelectorAll('.col-text');
-        if (colunasDOM.length > 1) {
-            colunasDOM[1].innerHTML = dataFormatada;
-            colunasDOM[1].title = `${dataStr} as ${horaStr}`;
-        }
-
-        itensBipados++;
-        spanBipados.textContent = itensBipados;
-        if (itensBipados === totalItens) spanBipados.style.color = '#137333';
-        
-        limparBarraERestaurarLista();
+        li.classList.remove('destaque-busca'); li.classList.add('verificado'); li.querySelector('.status-badge').textContent = 'OK';
+        const d = new Date(), dt = `${d.toLocaleDateString('pt-BR')}<br><span style="font-size: 0.9em; opacity: 0.85;">${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>`;
+        estoqueDados[index].verificado = true; estoqueDados[index].dataConferencia = dt; salvarNaMemoria();
+        const cols = li.querySelectorAll('.col-text'); if (cols.length > 1) cols[1].innerHTML = dt;
+        itensBipados++; spanBipados.textContent = itensBipados; if (itensBipados === totalItens) spanBipados.style.color = '#137333';
+        searchBar.value = ''; searchBar.focus(); searchBar.dispatchEvent(new Event('input')); 
     }
 
     function dispararAvisoVerificado(li) {
-        li.style.display = 'flex';
-        li.classList.add('piscar-aviso');
-        li.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        alertWarning.style.display = 'block';
-        infoFiltro.style.display = 'none'; 
-        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
-        audio.play().catch(() => {}); 
-        searchBar.select();
+        li.style.display = 'flex'; li.classList.add('piscar-aviso'); li.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        alertWarning.style.display = 'block'; infoFiltro.style.display = 'none'; 
+        new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3').play().catch(() => {}); searchBar.select();
     }
 
     function dispararErro() {
-        alertBox.style.display = 'block';
-        infoFiltro.style.display = 'none';
-        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
-        audio.play().catch(() => {}); 
-        setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
-        searchBar.select(); 
-    }
-
-    function limparBarraERestaurarLista() {
-        searchBar.value = '';
-        searchBar.focus();
-        searchBar.dispatchEvent(new Event('input')); 
+        alertBox.style.display = 'block'; infoFiltro.style.display = 'none';
+        new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3').play().catch(() => {}); 
+        setTimeout(() => alertBox.style.display = 'none', 3000); searchBar.select(); 
     }
 </script>
 
