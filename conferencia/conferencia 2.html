@@ -203,7 +203,6 @@
         li:last-child { border-bottom: none; }
         .mensagem-vazia { color: var(--text-muted); text-align: center; justify-content: center; width: 100%; }
         
-        /* Ajuste fino na largura das colunas para parecer mais com o Excel */
         .grid-row { flex: 1; display: grid; grid-template-columns: 0.8fr 1fr 3.5fr 1.5fr 3.5fr 1fr 0.6fr 1fr; gap: 15px; align-items: center; padding-right: 15px; }
         .col-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .col-ns { color: var(--primary-color); font-weight: bold; }
@@ -384,7 +383,7 @@
         return null;
     }
 
-    // Configuração do PDF.JS (Evita erro CORS)
+    // Configuração do PDF.JS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -465,8 +464,7 @@
     }
 
     // =====================================================================
-    // O NOVO CÉREBRO DE LEITURA (SUPER PARSER)
-    // Alinha perfeitamente a Tabela independentemente se o PDF bagunçar
+    // O NOVO CÉREBRO DE LEITURA (IGNORA O FUNCIONÁRIO)
     // =====================================================================
     function parseLinhaInteligente(limpo) {
         let codigoMatch = limpo.match(/^(\d{4,8})\s+/);
@@ -482,17 +480,23 @@
         }
 
         let qtd = '1';
-        let funcionario = '-';
+        let funcionario = '-'; // FORÇADO A FICAR VAZIO. NUNCA MAIS EXIBIRÁ O NOME!
+        
         let funcMatch = restante.match(/\s+(\d{1,4})\s+([A-Za-zÀ-ÿ\s\.\-]+)$/);
         if (funcMatch && !funcMatch[2].toLowerCase().includes('pronto') && !funcMatch[2].toLowerCase().includes('defeito') && !funcMatch[2].toLowerCase().includes('uso')) {
             qtd = funcMatch[1];
-            funcionario = funcMatch[2].trim().toUpperCase();
+            // Nós achamos o nome do funcionário e retiramos do texto, mas NÃO salvamos na variável
             restante = restante.substring(0, restante.length - funcMatch[0].length).trim();
         } else {
             let endQtdMatch = restante.match(/\s+(\d{1,4})$/);
             if (endQtdMatch) {
                 qtd = endQtdMatch[1];
                 restante = restante.substring(0, restante.length - endQtdMatch[0].length).trim();
+            } else {
+                let justFuncMatch = restante.match(/\s+([A-Za-zÀ-ÿ\s\.\-]+)$/);
+                if (justFuncMatch && !justFuncMatch[1].toLowerCase().includes('pronto') && !justFuncMatch[1].toLowerCase().includes('defeito') && !justFuncMatch[1].toLowerCase().includes('uso')) {
+                     restante = restante.substring(0, restante.length - justFuncMatch[0].length).trim();
+                }
             }
         }
 
