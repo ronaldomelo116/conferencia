@@ -287,7 +287,7 @@
 
 <script>
     // =====================================================================
-    // BANCO DE DADOS DE SUBCATEGORIAS (Com a numeração de 10 caracteres)
+    // 1. BANCO DE DADOS DE SUBCATEGORIAS CONHECIDAS
     // =====================================================================
     const subcategoriasConhecidas = [
         "1000014159 cabo alimentacao 0,7m azul/preto hdepc",
@@ -361,6 +361,20 @@
     ];
     const subcategoriasLimpo = subcategoriasConhecidas.map(s => s.toLowerCase().replace(/\s+/g, ' '));
 
+    // =====================================================================
+    // 2. LISTA DE ITENS QUE NÃO POSSUEM NÚMERO DE SÉRIE
+    // =====================================================================
+    const itensSemNS = [
+        "cabo alimentacao", "cabo blind", "auxiliar de instalacao", "area geral",
+        "cabo precon", "abracadeira", "bandeja", "modulo de funcao",
+        "cabo sinal", "espuma", "suporte", "cabo coaxial", "antena",
+        "kit/cj", "kit materiais", "kit mat", "cabo flexivel", "parafuso",
+        "cabo 12f", "cabo 02f", "caixa op", "provedor aterramento", "etiqueta",
+        "unidade cabo", "luva", "jumper", "downtilt", "grampo", "porca",
+        "arruela", "quadro monof", "terminal", "cabo pp", "cabo de rede",
+        "conector", "placa b003"
+    ];
+
     function rastrearSubcategoria(textoDaLinha) {
         let textoLimpo = textoDaLinha.toLowerCase().replace(/\s+/g, ' ');
         let match = subcategoriasLimpo.find(sub => textoLimpo.includes(sub));
@@ -368,7 +382,7 @@
         return null;
     }
 
-    // Configuração do PDF.JS - Solução contra erro CORS
+    // Configuração do PDF.JS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -448,6 +462,7 @@
         pasteArea.value = '';
     }
 
+    // --- LEITURA DE TEXTO / CSV ---
     function processarTexto(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
@@ -478,11 +493,13 @@
                 if (p >= 1 && /^[0-9]{1,4}$/.test(colunas[p])) { qtd = colunas[p]; p--; }
                 if (p >= 1 && (colunas[p].toLowerCase().includes('pronto') || colunas[p].toLowerCase().includes('defeito') || colunas[p].toLowerCase().includes('uso'))) { estado = colunas[p]; p--; }
 
-                // IA 1: O Array de conhecimentos
-                let subcategoriaConhecida = rastrearSubcategoria(limpo);
+                let linhaOriginalInteira = colunas.join(' ');
+                let subcategoriaConhecida = rastrearSubcategoria(linhaOriginalInteira);
+                let ehItemSemNS = itensSemNS.some(kw => linhaOriginalInteira.toLowerCase().includes(kw));
                 
                 if (subcategoriaConhecida) {
                     subcategoria = subcategoriaConhecida;
+                    ns = '-'; 
                     itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
                     if (itemNome.toLowerCase().includes(subcategoriaConhecida.toLowerCase())) {
                         itemNome = itemNome.toLowerCase().replace(subcategoriaConhecida.toLowerCase(), '').trim();
@@ -493,15 +510,17 @@
                     if (p >= 1) { ns = colunas[p]; p--; }
                     itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim() || '-';
                     
-                    // IA 2: A Regra dos 10 Caracteres (Ensino do Usuário)
-                    // Se a Subcategoria não pegou a numeração de 10 dígitos, forçamos a encontrar
-                    let mCode = itemNome.match(/\b[123]\d{9}\b/);
-                    if (mCode && !subcategoria.includes(mCode[0])) {
-                        subcategoria = mCode[0] + " " + subcategoria.replace(/^-$/, '').trim();
-                    }
-                    if (/\b[123]\d{9}\b/.test(ns)) {
-                        subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
+                    if (ehItemSemNS) {
                         ns = '-';
+                    } else {
+                        let mCode = itemNome.match(/\b[123]\d{9}\b/);
+                        if (mCode && !subcategoria.includes(mCode[0])) {
+                            subcategoria = mCode[0] + " " + subcategoria.replace(/^-$/, '').trim();
+                        }
+                        if (/\b[123]\d{9}\b/.test(ns)) {
+                            subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
+                            ns = '-';
+                        }
                     }
                 }
 
@@ -517,6 +536,7 @@
         adicionarDados(novosDados);
     }
 
+    // --- LEITURA GEOMÉTRICA PDF ---
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -600,26 +620,32 @@
                 extractedRows.forEach(colData => {
                     let linhaOriginalInteira = colData.join(' ');
                     
-                    let subcategoria = colData[3] || '-'; 
-                    let ns = colData[2] || '-';
-                    let itemNome = colData[1] || '-';
+                    let subcategoria = colData[3] ? colData[3].trim() : '-'; 
+                    let ns = colData[2] ? colData[2].trim() : '-';
+                    let itemNome = colData[1] ? colData[1].trim() : '-';
                     
-                    // IA 1: O Array de Conhecimento (Lista de Exceções)
                     let subcategoriaConhecida = rastrearSubcategoria(linhaOriginalInteira);
+                    let ehItemSemNS = itensSemNS.some(kw => linhaOriginalInteira.toLowerCase().includes(kw));
+
                     if (subcategoriaConhecida) {
                         subcategoria = subcategoriaConhecida;
-                        ns = '-'; // Se tá na lista de exceções, limpa o NS
+                        ns = '-'; 
                     } else {
-                        // IA 2: A Regra dos 10 Caracteres
-                        // Se o NS (coluna 2 do PDF) tiver a numeração de 10 dígitos, empurramos pra Subcategoria
-                        if (/\b[123]\d{9}\b/.test(ns)) {
-                            subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
+                        if (ehItemSemNS) {
+                            // Se a geometria jogou parte da subcategoria no NS por engano, arrumamos
+                            if (ns !== '-' && ns !== '') {
+                                subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
+                            }
                             ns = '-';
-                        }
-                        // Garante que se a numeração ficou no Nome do Item, ela vai para a Subcategoria
-                        let match10 = itemNome.match(/\b[123]\d{9}\b/);
-                        if (match10 && !subcategoria.includes(match10[0])) {
-                            subcategoria = match10[0] + " " + subcategoria.replace(/^-$/, '').trim();
+                        } else {
+                            if (/\b[123]\d{9}\b/.test(ns)) {
+                                subcategoria = (ns + " " + subcategoria.replace(/^-$/, '')).trim();
+                                ns = '-';
+                            }
+                            let match10 = itemNome.match(/\b[123]\d{9}\b/);
+                            if (match10 && !subcategoria.includes(match10[0])) {
+                                subcategoria = match10[0] + " " + subcategoria.replace(/^-$/, '').trim();
+                            }
                         }
                     }
 
