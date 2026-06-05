@@ -286,7 +286,7 @@
 </div>
 
 <script>
-    // Configuração do PDF.JS
+    // Configuração do PDF.JS - Solução contra erro CORS
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
@@ -341,7 +341,6 @@
     };
 
     function salvarNaMemoria() { localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados)); }
-
     inputTransacao.addEventListener('input', function() { localStorage.setItem('codigoTransacaoBrisanet', this.value.trim()); });
 
     btnLimpar.addEventListener('click', function() {
@@ -356,10 +355,21 @@
         currentSortColumn = -1; estoqueDados = []; localStorage.removeItem('dadosConferenciaBrisanet');
     });
 
-    // --- NOVA LEITURA DE TRÁS PARA FRENTE ---
-    function processarConteudo(content) {
+    // --- FUNÇÃO PARA ADICIONAR DADOS NA TELA ---
+    function adicionarDados(novosDados) {
+        if(novosDados.length > 0) {
+            estoqueDados = estoqueDados.concat(novosDados);
+            salvarNaMemoria(); renderizarDaMemoria(); 
+            btnLimpar.disabled = false; btnBaixarPDF.disabled = false; 
+        } else {
+            alert("Nenhum equipamento válido foi encontrado no arquivo.");
+        }
+        pasteArea.value = '';
+    }
+
+    // --- EXTRAÇÃO DE TEXTO COLADO OU ARQUIVO TXT/CSV ---
+    function processarTexto(content) {
         let linhas = content.split(/\r?\n/).filter(line => line.trim() !== '');
-        
         const matchT = content.match(/Transa[çc][ãa]o:\s*(\d+)/i);
         if(matchT) {
             inputTransacao.value = matchT[1];
@@ -367,7 +377,6 @@
         }
 
         let novosDados = [];
-
         linhas.forEach(linha => {
             let limpo = linha.replace(/"/g, '').trim();
             if (limpo.toLowerCase().includes('código') && limpo.toLowerCase().includes('status')) return; 
@@ -381,68 +390,36 @@
             let codigo = colunas[0];
 
             if (codigo && /^\d{4,8}$/.test(codigo)) {
-                
-                // Variáveis base que queremos preencher
-                let estado = '-';
-                let subcategoria = '-';
-                let ns = '-';
-                let itemNome = '-';
-                let qtd = '1';
-                let funcionario = '-';
-
-                // Lendo de TRÁS PARA FRENTE para alinhar perfeitamente
-                let p = colunas.length - 1;
-
-                // 1. Pula o "Status" (Confirmado/Pendente) se existir no final da linha
-                if (colunas[p] && (colunas[p].toLowerCase().includes('confirmado') || colunas[p].toLowerCase().includes('pendente') || colunas[p].toLowerCase().includes('cancelado'))) {
-                    p--;
-                }
-
-                // 2. Extrai Funcionário
-                if (p >= 1 && isNaN(parseInt(colunas[p])) && colunas[p].length > 5) {
-                    funcionario = colunas[p].toUpperCase();
-                    p--;
-                }
-
-                // 3. Extrai Quantidade (Sempre é um número pequeno isolado)
-                if (p >= 1 && /^[0-9]{1,4}$/.test(colunas[p])) {
-                    qtd = colunas[p];
-                    p--;
-                }
-
-                // 4. Extrai Estado (Se existir: Pronto, Defeito, Uso)
-                if (p >= 1 && (colunas[p].toLowerCase().includes('pronto') || colunas[p].toLowerCase().includes('defeito') || colunas[p].toLowerCase().includes('uso'))) {
-                    estado = colunas[p];
-                    p--;
-                }
-
-                // 5. O que vier antes do Estado (ou Quantidade) é a Subcategoria, garantido!
-                if (p >= 1) {
-                    subcategoria = colunas[p];
-                    p--;
-                }
-
-                // 6. O próximo pode ser o N/S ou já ser o Item se for um parafuso/cabo.
-                if (p >= 1) {
-                    let isLikelyNS = (str) => {
-                        str = str.toUpperCase();
-                        if (/^(FHTT|ZTEG|HWTC|ALCL|CMDC)/.test(str)) return true;
-                        // Regra de NS misturando letras e numeros
-                        if (/^[A-Z0-9]{8,24}$/.test(str) && /[A-Z]/.test(str) && /[0-9]/.test(str)) return true;
-                        return false;
-                    };
-                    
-                    if (isLikelyNS(colunas[p]) || (colunas.length > 5 && p > 1)) {
-                        ns = colunas[p];
-                        p--;
+                let estadoIndex = -1;
+                for (let i = colunas.length - 1; i >= 2; i--) {
+                    let c = colunas[i].toLowerCase();
+                    if (c.includes('pronto') || c.includes('defeito') || c.includes('uso')) {
+                        estadoIndex = i; break;
                     }
                 }
+                
+                let ns = '-', subcategoria = '-', itemNome = '-', estado = '-', qtd = '1', funcionario = '-';
 
-                // 7. O que sobrou entre o Código e o ponteiro atual é o Nome do Item!
-                if (p >= 1) {
-                    itemNome = colunas.slice(1, p + 1).join(' ').replace(/---/g, '').trim();
+                if (estadoIndex !== -1) {
+                    estado = colunas[estadoIndex];
+                    let valE1 = colunas[estadoIndex - 1]; 
+                    let valE2 = colunas[estadoIndex - 2]; 
+
+                    let isLikelyNS = (str) => str && (/^(FHTT|ZTEG|HWTC|ALCL|CMDC)/i.test(str) || /^[A-Z0-9]{8,24}$/i.test(str));
+
+                    if (isLikelyNS(valE1) && !isLikelyNS(valE2)) {
+                        ns = valE1;
+                        itemNome = colunas.slice(1, estadoIndex - 1).join(' ').replace(/---/g, '').trim();
+                    } else {
+                        ns = valE2; subcategoria = valE1;
+                        itemNome = colunas.slice(1, estadoIndex - 2).join(' ').replace(/---/g, '').trim();
+                    }
+                    qtd = colunas[estadoIndex + 1] || '1';
+                    if (colunas.length > estadoIndex + 2) {
+                        funcionario = colunas.slice(estadoIndex + 2).join(' ').replace(/(pendente|ok|---)/ig, '').trim().toUpperCase();
+                    }
                 } else {
-                    itemNome = colunas[1] || '-';
+                    itemNome = colunas[1] || '-'; ns = colunas[2] || '-'; subcategoria = colunas[3] || '-';
                 }
 
                 novosDados.push({
@@ -450,30 +427,14 @@
                     linhaUpper: limpo.toUpperCase(),
                     verificado: false,
                     dataConferencia: null,
-                    colunasParseadas: [
-                        codigo,
-                        '-',
-                        itemNome || '-',
-                        ns || '-',
-                        subcategoria || '-',
-                        estado || '-',
-                        qtd,
-                        funcionario || '-'
-                    ]
+                    colunasParseadas: [codigo, '-', itemNome || '-', ns || '-', subcategoria || '-', estado || '-', qtd || '1', funcionario || '-']
                 });
             }
         });
-
-        if(novosDados.length > 0) {
-            estoqueDados = estoqueDados.concat(novosDados);
-            salvarNaMemoria(); renderizarDaMemoria(); 
-            btnLimpar.disabled = false; btnBaixarPDF.disabled = false; 
-        } else if (content.length > 15) {
-            alert("Nenhum equipamento válido foi encontrado no arquivo.");
-        }
-        pasteArea.value = '';
+        adicionarDados(novosDados);
     }
 
+    // --- LEITURA GEOMÉTRICA DE PDF ---
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -483,9 +444,12 @@
             try {
                 btnCarregarTexto.textContent = "⏳ Lendo PDF..."; btnCarregarTexto.disabled = true;
                 const arrayBuffer = await file.arrayBuffer();
-                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
-                const pdf = await loadingTask.promise;
-                let fullTextLines = [];
+                const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+                
+                let extractedRows = [];
+                let currentRow = null;
+                // Posições Padrão Estimadas na folha (Baseado no layout da Brisanet)
+                let headersX = [40, 100, 320, 450, 580, 680, 720, 800]; 
 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
@@ -497,23 +461,87 @@
                         inputTransacao.value = matchT[1]; localStorage.setItem('codigoTransacaoBrisanet', matchT[1]);
                     }
 
+                    // ACHA OS CABEÇALHOS PARA CRIAR AS DIVISÓRIAS EXATAS
+                    textContent.items.forEach(item => {
+                        let t = item.str.trim().toLowerCase();
+                        if(t === 'codigo' || t === 'código') headersX[0] = item.transform[4];
+                        else if(t === 'item') headersX[1] = item.transform[4];
+                        else if(t === 'n/s') headersX[2] = item.transform[4];
+                        else if(t === 'subcategoria') headersX[3] = item.transform[4];
+                        else if(t === 'estado') headersX[4] = item.transform[4];
+                        else if(t === 'quantidade') headersX[5] = item.transform[4];
+                        else if(t.includes('funcionario') || t.includes('acao')) headersX[6] = item.transform[4];
+                        else if(t === 'status') headersX[7] = item.transform[4];
+                    });
+
+                    // CRIA AS BARREIRAS INVISÍVEIS ENTRE AS COLUNAS
+                    let bounds = [];
+                    for(let j=0; j<7; j++) {
+                        let current = headersX[j];
+                        let next = headersX[j+1];
+                        if (next > current) bounds.push((current + next) / 2);
+                        else bounds.push(current + 50); // Margem de segurança
+                    }
+
+                    // Agrupa por altura (Eixo Y)
                     const itemsByY = {};
                     textContent.items.forEach(item => {
                         const str = item.str.trim();
                         if(!str) return;
-                        const y = Math.round(item.transform[5] / 6) * 6; 
+                        const y = Math.round(item.transform[5] / 4) * 4; 
                         if (!itemsByY[y]) itemsByY[y] = [];
                         itemsByY[y].push(item);
                     });
 
-                    const yKeys = Object.keys(itemsByY).sort((a, b) => b - a);
+                    // Varre de cima para baixo
+                    const yKeys = Object.keys(itemsByY).sort((a, b) => b - a); 
+                    
                     yKeys.forEach(y => {
                         const rowItems = itemsByY[y].sort((a, b) => a.transform[4] - b.transform[4]);
-                        const rowText = rowItems.map(item => item.str.trim()).join('\t');
-                        if (rowText) fullTextLines.push(rowText);
+                        
+                        let colData = ["", "", "", "", "", "", "", ""];
+                        rowItems.forEach(item => {
+                            let x = item.transform[4];
+                            let colIndex = 0;
+                            // Joga a palavra na coluna correspondente à posição X dela
+                            while(colIndex < 7 && x > bounds[colIndex]) colIndex++;
+                            colData[colIndex] += (colData[colIndex] ? " " : "") + item.str.trim();
+                        });
+
+                        if (colData[0].match(/^\d{4,8}$/)) {
+                            if (currentRow) extractedRows.push(currentRow);
+                            currentRow = colData;
+                        } else if (currentRow) {
+                            for(let c=1; c<8; c++) {
+                                if (colData[c]) currentRow[c] += (currentRow[c] ? " " : "") + colData[c];
+                            }
+                        }
                     });
                 }
-                processarConteudo(fullTextLines.join('\n'));
+                if (currentRow) extractedRows.push(currentRow);
+
+                // Monta a Tabela
+                let novosDados = [];
+                extractedRows.forEach(colData => {
+                    novosDados.push({
+                        linhaOriginal: colData.join(' '),
+                        linhaUpper: colData.join(' ').toUpperCase(),
+                        verificado: false,
+                        dataConferencia: null,
+                        colunasParseadas: [
+                            colData[0],
+                            '-', 
+                            colData[1] || '-', 
+                            colData[2] || '-', 
+                            colData[3] || '-', 
+                            colData[4] || '-', 
+                            colData[5] || '1', 
+                            colData[6] || '-'  
+                        ]
+                    });
+                });
+
+                adicionarDados(novosDados);
             } catch (error) {
                 console.error(error); alert(`Erro ao ler o arquivo PDF:\n${error.message}\n\nTente copiar a tabela e colar o texto na caixa abaixo.`);
             } finally {
@@ -521,7 +549,7 @@
             }
         } else {
             const reader = new FileReader();
-            reader.onload = function(e) { processarConteudo(e.target.result); };
+            reader.onload = function(e) { processarTexto(e.target.result); };
             reader.readAsText(file);
         }
     });
@@ -529,7 +557,7 @@
     btnCarregarTexto.addEventListener('click', function() {
         const textoColado = pasteArea.value;
         if (!textoColado.trim()) { alert('Por favor, cole os dados da tabela na caixa de texto primeiro!'); pasteArea.focus(); return; }
-        processarConteudo(textoColado);
+        processarTexto(textoColado);
     });
 
     document.querySelectorAll('.sortable').forEach(header => {
