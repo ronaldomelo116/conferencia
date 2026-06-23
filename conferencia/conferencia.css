@@ -1,0 +1,564 @@
+/* --- VARIÁVEIS DE TEMA --- */
+        :root {
+            --bg-container: #202124;
+            --bg-section: #303134;
+            --bg-input: #171717;
+            --text-main: #e8eaed;
+            --text-title: #ffffff;
+            --text-muted: #9aa0a6;
+            --border-color: #5f6368;
+            --list-header: #171717;
+            --badge-bg: #5f6368;
+            --badge-text: #ffffff;
+            --primary-color: #8ab4f8;
+            --highlight-bg: #444746;
+            --btn-theme-bg: #303134;
+            --btn-theme-text: #e8eaed;
+            --filtro-bg: #3c4043;
+            --filtro-text: #fbbc04;
+        }
+
+        [data-theme="light"] {
+            --bg-container: #ffffff;
+            --bg-section: #f8f9fa;
+            --bg-input: #ffffff;
+            --text-main: #202124;
+            --text-title: #202124;
+            --text-muted: #5f6368;
+            --border-color: #dadce0;
+            --list-header: #e8eaed;
+            --badge-bg: #dadce0;
+            --badge-text: #202124;
+            --primary-color: #1a73e8; 
+            --highlight-bg: #fff8e1;
+            --btn-theme-bg: #ffffff;
+            --btn-theme-text: #202124;
+            --filtro-bg: #fef7e0;
+            --filtro-text: #b06000;
+        }
+
+        body {
+            background-color: var(--bg-section);
+            color: var(--text-main);
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 95vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--btn-theme-bg);
+            color: var(--btn-theme-text);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- NOVO: TÍTULO EXTERNO --- */
+        .page-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            color: var(--text-title); /* Sempre branco para contrastar com o fundo laranja */
+            text-align: center;
+            flex-wrap: wrap;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+        }
+        .page-header a {
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s;
+            text-decoration: none;
+        }
+        .page-header a:hover {
+            transform: scale(1.08);
+        }
+        .logo-img {
+            height: 65px; 
+            width: auto;
+            border-radius: 50%; /* Deixa a logo mais redondinha/suave se houver fundo */
+        }
+
+        /* --- CONTAINER PRINCIPAL --- */
+        ..container {
+    max-width: 1600px; /* Estava 1400px, aumentamos para dar mais espaço geral */
+    width: 100%;
+    margin: 0 auto;
+    background-color: var(--bg-container);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    flex: 1; 
+    box-sizing: border-box;
+    transition: background-color 0.3s ease;
+}
+
+        /* --- NOVO: BARRA SUPERIOR INTERNA --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap; 
+            gap: 15px;
+        }
+
+        .input-transacao {
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border: 2px solid var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            width: 300px;
+            transition: box-shadow 0.2s;
+        }
+        .input-transacao:focus {
+            box-shadow: 0 0 5px rgba(138, 180, 248, 0.5);
+        }
+        
+        .painel-contagem {
+    background-color: var(--bg-section);
+    padding: 15px 30px; /* Aumentado para dar mais volume à caixa */
+    border-radius: 40px; 
+    font-size: 24px; /* Texto "Conferidos:" maior */
+    border: 3px solid var(--primary-color); /* Borda mais grossa para acompanhar o tamanho */
+    color: var(--text-title);
+    white-space: nowrap;
+
+    /* --- DE VOLTA AO CANTO INFERIOR DIREITO --- */
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35); /* Sombra mais destacada */
+    transition: transform 0.2s ease;
+}
+
+.painel-contagem:hover {
+    transform: scale(1.05); /* Efeito de expansão simples ao passar o mouse */
+}
+
+/* Deixa apenas os números com um tamanho ainda maior */
+.painel-contagem span {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 36px; /* Números gigantes (antes era 24px) */
+}
+
+        .upload-section {
+            background-color: var(--bg-section);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .upload-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        input[type="file"] {
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+        .btn-limpar {
+            background-color: #c5221f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-limpar:hover {
+            background-color: #a51b19;
+        }
+        .btn-limpar:disabled {
+            background-color: var(--badge-bg);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .btn-pdf {
+            background-color: #137333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-pdf:hover {
+            background-color: #0d5022;
+        }
+        .btn-pdf:disabled {
+            background-color: var(--badge-bg);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .paste-area {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            margin-top: 15px;
+            box-sizing: border-box;
+            font-family: monospace;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .paste-area:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        .btn-carregar {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: filter 0.2s;
+            margin-top: 10px;
+        }
+        .btn-carregar:hover {
+            filter: brightness(1.1);
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--primary-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        .search-bar:focus {
+            box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
+        }
+        
+        #alert-box {
+            display: none;
+            background-color: #fce8e6;
+            color: #c5221f;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #c5221f;
+        }
+        #alert-warning {
+            display: none;
+            background-color: #fef7e0;
+            color: #b06000;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #fbbc04;
+        }
+        
+        #info-filtro {
+            display: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 6px solid transparent;
+        }
+        .info-filtro-encontrado {
+            background-color: var(--filtro-bg) !important;
+            color: var(--filtro-text) !important;
+            border-left-color: #fbbc04 !important;
+        }
+        .info-filtro-erro {
+            background-color: #fce8e6 !important;
+            color: #c5221f !important;
+            border-left-color: #c5221f !important;
+        }
+
+        .tabela-container {
+            background-color: var(--bg-section);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .list-header {
+            display: flex;
+            background-color: var(--list-header);
+            padding: 15px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .sortable {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .sortable:hover {
+            color: var(--text-title);
+        }
+        .sort-icon {
+            font-size: 10px;
+            opacity: 0.4;
+        }
+        .sortable.active .sort-icon {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 600px;
+            overflow-y: auto;
+            background-color: transparent;
+        }
+        li {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            display: flex; 
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        .mensagem-vazia {
+            color: var(--text-muted);
+            text-align: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .grid-row {
+    flex: 1;
+    display: grid;
+    /* ALTERADO: Diminuímos o Nome (de 4fr para 2.5fr) e aumentamos os dois NS (de 1.5fr para 2.3fr) */
+    grid-template-columns: 0.8fr 1.2fr 2.5fr 2.3fr 2.3fr 1fr 0.5fr 1fr;
+    gap: 15px;
+    align-items: center;
+    padding-right: 15px;
+}
+        .col-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .col-ns {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .destaque-busca {
+            background-color: var(--highlight-bg) !important;
+            border-left: 8px solid #fbbc04;
+        }
+        .verificado {
+            background-color: #137333 !important;
+            color: #fff;
+            border-left: 8px solid #137333;
+        }
+        .verificado .col-text, .verificado .col-ns {
+            color: #fff !important;
+        }
+        
+        @keyframes piscarAmarelo {
+            0% { background-color: #137333; border-left-color: #137333; }
+            50% { background-color: #b06000; border-left-color: #fbbc04; }
+            100% { background-color: #137333; border-left-color: #137333; }
+        }
+        .piscar-aviso {
+            animation: piscarAmarelo 0.8s infinite !important;
+        }
+
+        .status-container {
+            width: 80px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .status-badge {
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background-color: var(--badge-bg);
+            color: var(--badge-text);
+            font-weight: bold;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .verificado .status-badge {
+            background-color: #ceead6;
+            color: #137333;
+        }
+
+        .footer {
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto 0 auto;
+            background-color: var(--bg-container);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer-lembrete {
+            color: #fbbc04; 
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .footer a {
+            color: var(--primary-color); 
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* --- NOVO: LAYOUT PRINCIPAL E RESUMO FLUTUANTE --- */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start; /* Essencial para a caixa flutuante acompanhar a rolagem */
+}
+
+.tabela-container {
+    flex: 1; /* Faz a tabela ocupar o máximo de espaço possível */
+    min-width: 0; /* Previne quebra de layout */
+}
+
+.resumo-flutuante {
+    width: 320px;
+    background-color: var(--bg-section);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    position: sticky; /* Faz a caixa descer junto com a tela */
+    top: 20px; 
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.resumo-flutuante h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: var(--text-title);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.resumo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.resumo-item:last-child {
+    border-bottom: none;
+}
+
+.resumo-nome {
+    flex: 1;
+    padding-right: 15px;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.resumo-qtd {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.resumo-qtd.completo {
+    background-color: #137333; /* Fica verde quando bipa todos desse modelo! */
+}
+
+/* Responsividade: joga a caixa pra baixo no celular */
+@media (max-width: 1024px) {
+    .main-layout {
+        flex-direction: column;
+    }
+    .resumo-flutuante {
+        width: 100%;
+        position: static;
+        box-sizing: border-box;
+    }
+}
