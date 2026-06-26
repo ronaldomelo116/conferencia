@@ -71,26 +71,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /* =========================================================
-       IDEIA 3: O CONTADOR FLUTUANTE "COMEMORANDO"
+       IDEIAS 3 E 6: CONTADOR PULANDO + BRILHO DE 100% CONCLUÍDO
        ========================================================= */
     const painelContagem = document.querySelector('.painel-contagem');
     const spanBipados = document.getElementById('qtdBipados');
+    const spanTotal = document.getElementById('qtdTotal');
 
-    if (painelContagem && spanBipados) {
+    if (painelContagem && spanBipados && spanTotal) {
         const observadorContador = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                    const quantidade = parseInt(spanBipados.textContent);
+                    const bipados = parseInt(spanBipados.textContent);
+                    const total = parseInt(spanTotal.textContent);
                     
-                    if (quantidade > 0) {
+                    if (bipados > 0 && bipados < total) {
+                        // Pulso normal a cada bipe
                         gsap.fromTo(painelContagem,
                             { scale: 1.15, borderColor: "#137333" }, 
                             { 
                                 scale: 1, 
                                 borderColor: "var(--primary-color)", 
                                 duration: 0.4, 
-                                ease: "back.out(1.5)",
+                                ease: "back.out(1.5)", 
                                 clearProps: "scale,borderColor" 
+                            }
+                        );
+                    } else if (bipados > 0 && bipados === total) {
+                        // COMEMORAÇÃO DE 100%: Pulso maior e sombra neon verde
+                        gsap.fromTo(painelContagem,
+                            { scale: 1.2, backgroundColor: "#137333", color: "#ffffff" }, 
+                            { 
+                                scale: 1, 
+                                backgroundColor: "var(--bg-section)", 
+                                color: "var(--text-title)",
+                                boxShadow: "0 0 30px rgba(19, 115, 51, 0.8)", // Glow Verde
+                                duration: 1.5, 
+                                ease: "elastic.out(1, 0.3)",
+                                clearProps: "scale,backgroundColor,color,boxShadow"
                             }
                         );
                     }
@@ -111,19 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const resumoFlutuante = document.getElementById('resumoFlutuante');
     
     if (resumoFlutuante) {
-        let resumoVisivel = false; // Memória para saber se já estava na tela
+        let resumoVisivel = false; 
 
         const observadorResumo = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    // Checa se o display passou a ser 'block'
                     const isBlock = resumoFlutuante.style.display === 'block';
                     
-                    // Se for 'block' e ainda não estava visível, roda a animação
                     if (isBlock && !resumoVisivel) {
                         resumoVisivel = true;
                         
-                        // Efeito GSAP: Entra deslizando pela direita com fade-in
                         gsap.fromTo(resumoFlutuante,
                             { opacity: 0, x: 50 },
                             { 
@@ -135,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
                         );
                     } 
-                    // Se o display voltar para 'none' (ao clicar em Limpar Lista), reseta o estado
                     else if (!isBlock && resumoVisivel) {
                         resumoVisivel = false;
                     }
@@ -143,10 +156,67 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Observa as mudanças no atributo "style" da div
         observadorResumo.observe(resumoFlutuante, { 
             attributes: true, 
             attributeFilter: ['style'] 
         });
     }
+
+    /* =========================================================
+       IDEIA 5: FEEDBACK DE ERRO (SHAKE NA BARRA DE BUSCA)
+       ========================================================= */
+    const alertBox = document.getElementById('alert-box');
+    const searchBar = document.getElementById('searchBar');
+
+    if (alertBox && searchBar) {
+        const observadorErro = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (alertBox.style.display === 'block') {
+                        // Shake rápido para esquerda e direita indicando erro
+                        gsap.fromTo(searchBar, 
+                            { x: -8, borderColor: "#c5221f" }, 
+                            { 
+                                x: 8, 
+                                duration: 0.1, 
+                                repeat: 3, 
+                                yoyo: true, 
+                                ease: "power1.inOut",
+                                onComplete: () => {
+                                    gsap.set(searchBar, { x: 0, clearProps: "borderColor" });
+                                }
+                            }
+                        );
+                    }
+                }
+            });
+        });
+        
+        observadorErro.observe(alertBox, { 
+            attributes: true, 
+            attributeFilter: ['style'] 
+        });
+    }
+
+    /* =========================================================
+       IDEIA 7: BOTÕES COM FÍSICA DE MOLA (SQUISH)
+       ========================================================= */
+    const botoes = document.querySelectorAll('.btn-limpar, .btn-pdf, .btn-carregar, .theme-toggle');
+    
+    botoes.forEach(btn => {
+        // Quando aperta o botão, ele afunda
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.92, duration: 0.1, ease: "power1.out" });
+        });
+        
+        // Quando solta, ele volta dando um leve quique
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, duration: 0.4, ease: "back.out(2)" });
+        });
+        
+        // Se arrastar o mouse para fora antes de soltar o clique
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, duration: 0.4, ease: "back.out(2)" });
+        });
+    });
 });
