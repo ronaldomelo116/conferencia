@@ -23,6 +23,7 @@
         /* --- VARIÁVEIS DE TEMA --- */
         :root {
             --bg-container: #202124;
+            --bg-section: #303134;
             --text-main: #e8eaed;
             --border-color: #5f6368;
             --btn-theme-bg: #303134;
@@ -32,6 +33,7 @@
 
         [data-theme="light"] {
             --bg-container: #ffffff;
+            --bg-section: #f8f9fa;
             --text-main: #202124;
             --border-color: #dadce0;
             --btn-theme-bg: #ffffff;
@@ -40,7 +42,7 @@
         }
 
         body {
-            background-color: #ffffff; 
+            background-color: var(--bg-section); 
             color: var(--text-main);
             font-family: Arial, sans-serif;
             margin: 0;
@@ -198,14 +200,19 @@
 
         /* Rodapé */
         .footer {
-            margin-top: 50px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto 0 auto;
+            background-color: var(--bg-container);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
             text-align: center;
-            color: #ffffff;
+            color: var(--text-muted);
             font-size: 14px;
             line-height: 1.6;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 800px;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
         }
         .footer p {
             margin: 5px 0;
