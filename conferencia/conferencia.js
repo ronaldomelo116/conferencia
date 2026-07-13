@@ -360,6 +360,11 @@ searchBar.addEventListener('input', function() {
     const termo = this.value.trim().toUpperCase();
     const items = nsList.querySelectorAll('li');
     
+    const btnClearSearch = document.getElementById('btnClearSearch');
+    if (btnClearSearch) {
+        btnClearSearch.style.display = termo !== '' ? 'block' : 'none';
+        }
+    
     alertBox.style.display = 'none';
     alertWarning.style.display = 'none';
     infoFiltro.style.display = 'none';
@@ -494,18 +499,22 @@ function dispararAvisoVerificado(li) {
 }
 
 function dispararErro() {
-    alertBox.style.display = 'block';
-    infoFiltro.style.display = 'none';
-    
-    let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
-    audio.play().catch(() => {}); 
-    
-    setTimeout(() => {
-        alertBox.style.display = 'none';
-    }, 3000);
-    
-    searchBar.select(); 
-}
+        alertBox.style.display = 'block';
+        infoFiltro.style.display = 'none';
+        
+        let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
+        audio.play().catch(() => {}); 
+        
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 3000);
+        
+        // Mantém o cursor na barra de pesquisa
+        searchBar.focus(); 
+        
+        // NOVA LÓGICA: Coloca o cursor no final do texto sem selecionar nada
+        searchBar.setSelectionRange(searchBar.value.length, searchBar.value.length); 
+    }
 
 function limparBarraERestaurarLista() {
     searchBar.value = '';
@@ -566,3 +575,11 @@ function atualizarResumo() {
         listaResumo.appendChild(li);
     });
 }
+
+// Ação do botão X: Limpa a barra, volta o cursor para ela e atualiza a lista
+    const botaoLimparBusca = document.getElementById('btnClearSearch');
+    if (botaoLimparBusca) {
+        botaoLimparBusca.addEventListener('click', function() {
+            limparBarraERestaurarLista();
+        });
+    }
