@@ -196,4 +196,43 @@
         margin-bottom: 15px !important;
     }
 
+/* ---------------------------------------------------
+       AJUSTE DO RODAPÉ (Footer)
+       --------------------------------------------------- */
+    .footer {
+        padding: 15px !important; /* Reduz o "gordura" (espaço) em volta do texto */
+        font-size: 11px !important; /* Diminui a fonte geral do rodapé */
+    }
+
+    .footer p {
+        margin: 3px 0 !important; /* Aproxima as duas linhas de texto */
+        line-height: 1.4 !important; /* Melhora a leitura do texto menor */
+    }
+
+    .footer-lembrete {
+        font-size: 10px !important; /* Deixa o aviso do e-mail ainda mais discreto */
+    }
+    
+    /* ---------------------------------------------------
+       AJUSTE DOS BOTÕES DE AÇÃO (Sanfona)
+       --------------------------------------------------- */
+    .btn-limpar, .btn-pdf, .btn-carregar {
+        font-size: 13px !important; /* Diminui a letra dos botões */
+        padding: 8px 12px !important; /* Deixa os botões mais finos e compactos */
+    }
+
+    /* Organiza a caixa que segura o "Escolher arquivo", "Limpar" e "PDF" */
+    .upload-controls {
+        display: flex;
+        flex-wrap: wrap; /* Se não couber tudo na mesma linha, ele joga pro andar de baixo automático */
+        gap: 8px !important; /* Espaço pequeno e padrão entre eles */
+    }
+
+    /* O botão de "Carregar Texto Colado" fica melhor se ocupar a largura toda no celular */
+    .btn-carregar {
+        width: 100% !important; 
+        margin-top: 5px !important;
+    }
 }
+
+
