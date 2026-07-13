@@ -49,16 +49,23 @@
     </div>
     
     <div class="upload-section">
-        <label>1. Envie o arquivo da tabela OU cole os dados diretamente abaixo:</label>
-        
-        <div class="upload-controls">
-            <input type="file" id="txtFile" accept=".txt, .csv">
-            <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
-            <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
+        <!-- Cabeçalho clicável (Gatilho da Sanfona) -->
+        <div class="upload-header" id="toggleUploadBtn" title="Clique para Ocultar/Mostrar os controles">
+            <label style="cursor: pointer; margin: 0;">1. Envie o arquivo da tabela OU cole os dados diretamente abaixo:</label>
+            <span class="toggle-icon">▼</span>
         </div>
         
-        <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
-        <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
+        <!-- Conteúdo que vai encolher/expandir -->
+        <div class="upload-content" id="uploadContent">
+            <div class="upload-controls">
+                <input type="file" id="txtFile" accept=".txt, .csv">
+                <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
+                <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
+            </div>
+            
+            <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
+            <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
+        </div>
     </div>
 
     <input type="text" id="searchBar" class="search-bar" placeholder="Bipe o NS ou digite um nome para filtrar..." disabled autocomplete="off">
