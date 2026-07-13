@@ -266,20 +266,46 @@
             filter: brightness(1.1);
         }
 
+        /* --- BARRA DE BUSCA E BOTÃO DE LIMPAR (X) --- */
+        .search-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
         .search-bar {
             width: 100%;
             padding: 15px;
+            padding-right: 55px; /* Abre um espaço na direita para o texto não passar por cima do X */
             font-size: 24px;
             background-color: var(--bg-input);
             border: 2px solid var(--primary-color);
             color: var(--text-main);
             border-radius: 8px;
             box-sizing: border-box;
-            margin-bottom: 20px;
             outline: none;
         }
         .search-bar:focus {
             box-shadow: 0 0 8px rgba(138, 180, 248, 0.5);
+        }
+
+        .btn-clear-search {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-size: 22px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: none; /* Fica escondido por padrão */
+            padding: 5px;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .btn-clear-search:hover {
+            color: #c5221f; /* Fica vermelho ao passar o mouse */
+            transform: translateY(-50%) scale(1.2); /* Dá um leve aumento */
         }
         
         #alert-box {
