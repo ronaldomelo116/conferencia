@@ -220,3 +220,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+/* =========================================================
+       IDEIA 11: EFEITO SANFONA (ACCORDION) NA ÁREA DE UPLOAD
+       ========================================================= */
+    const toggleUploadBtn = document.getElementById('toggleUploadBtn');
+    const uploadContent = document.getElementById('uploadContent');
+    const toggleIcon = toggleUploadBtn ? toggleUploadBtn.querySelector('.toggle-icon') : null;
+
+    if (toggleUploadBtn && uploadContent) {
+        let isUploadOpen = true; // O sistema começa com a caixa aberta
+
+        toggleUploadBtn.addEventListener('click', () => {
+            isUploadOpen = !isUploadOpen; // Inverte o estado (Aberto <-> Fechado)
+
+            if (isUploadOpen) {
+                // 1. ABRIR: Aumenta a altura para "auto" e gira a seta de volta
+                gsap.to(uploadContent, { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" });
+                gsap.to(toggleIcon, { rotation: 0, duration: 0.3 });
+                
+                // 2. CASCATA: Faz os botões e a caixa de texto caírem suavemente um por um
+                gsap.fromTo(uploadContent.children, 
+                    { opacity: 0, y: -15 }, 
+                    { opacity: 1, y: 0, duration: 0.3, stagger: 0.1, ease: "power2.out", delay: 0.1 }
+                );
+            } else {
+                // 3. FECHAR: Encolhe a altura para zero e gira a seta para cima
+                gsap.to(uploadContent, { height: 0, opacity: 0, duration: 0.4, ease: "power2.inOut" });
+                gsap.to(toggleIcon, { rotation: -180, duration: 0.3 });
+            }
+        });
+    }
