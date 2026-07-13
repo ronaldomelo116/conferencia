@@ -608,3 +608,37 @@
 .upload-content {
     overflow: hidden; /* Segredo: Isso impede os botões de vazarem para fora quando a caixa diminuir */
 }
+
+/* ==================================================================
+   ESTILIZAÇÃO DA BARRA DE ROLAGEM (SCROLLBAR DISCRETA)
+   ================================================================== */
+
+/* Para navegadores baseados em WebKit (Google Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+    width: 8px;  /* Deixa a barra vertical bem mais fina */
+    height: 8px; /* Deixa a barra horizontal (se houver) mais fina */
+}
+
+/* O 'trilho' por onde a barra corre */
+::-webkit-scrollbar-track {
+    background: transparent; /* Deixa o fundo invisível para não poluir */
+    border-radius: 8px;
+}
+
+/* A barrinha que você clica e arrasta (Thumb) */
+::-webkit-scrollbar-thumb {
+    background: #555555; /* Um cinza médio bem discreto */
+    border-radius: 8px; /* Deixa as pontas arredondadas e modernas */
+    border: 2px solid var(--bg-body); /* Cria um espaço vazio ao redor dela */
+}
+
+/* A barrinha quando você passa o mouse por cima */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted); /* Fica um pouco mais clara para indicar o foco */
+}
+
+/* Suporte para o Mozilla Firefox */
+* {
+    scrollbar-width: thin; /* Força a barra a ser fina no Firefox */
+    scrollbar-color: #555555 transparent; /* Cor da barra e cor do fundo */
+}
