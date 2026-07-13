@@ -562,3 +562,23 @@
         box-sizing: border-box;
     }
 }
+
+/* --- EFEITO SANFONA NA ÁREA DE UPLOAD --- */
+.upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none; /* Evita do texto ficar azul selecionado ao clicar */
+    padding-bottom: 5px;
+}
+.upload-header:hover label, .upload-header:hover .toggle-icon {
+    color: var(--primary-color);
+}
+.toggle-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+.upload-content {
+    overflow: hidden; /* Segredo: Isso impede os botões de vazarem para fora quando a caixa diminuir */
+}
