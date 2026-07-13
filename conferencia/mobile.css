@@ -163,6 +163,37 @@
     .painel-contagem span {
         font-size: 24px !important; 
     }
+
+/* ---------------------------------------------------
+       AJUSTE DO CABEÇALHO DA PÁGINA
+       --------------------------------------------------- */
+    .page-header {
+        gap: 10px !important; /* Diminui o espaço entre a logo e o texto */
+        margin-bottom: 15px !important;
+    }
+
+    .page-header h1 {
+        font-size: 24px !important; /* Diminui o título de 42px para 24px */
+    }
+
+    .logo-img {
+        height: 45px !important; /* Diminui a logo proporcionalmente (era 65px) */
+    }
+
+
+/* ---------------------------------------------------
+       AJUSTE DA BARRA DE TRANSAÇÃO (INPUT)
+       --------------------------------------------------- */
+    .input-transacao {
+        width: 100% !important; /* Faz a barra se adaptar perfeitamente à tela do celular */
+        font-size: 14px !important; /* Reduz um pouco o tamanho da letra */
+        padding: 8px 12px !important; /* Deixa a caixa levemente mais fina e elegante */
+        box-sizing: border-box !important; /* Garante que as bordas não vazem para fora da tela */
+    }
+    
+    .top-bar {
+        padding-bottom: 15px !important; /* Diminui o espaço sobrando debaixo da barra */
+        margin-bottom: 15px !important;
+    }
+
 }
-
-
