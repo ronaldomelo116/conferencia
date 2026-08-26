@@ -22,6 +22,8 @@
     <!-- Bibliotecas necessárias para gerar o PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    <!-- Biblioteca para gerar EXCEL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="conferencia.css">
     <link rel="stylesheet" href="mobile.css">
@@ -31,12 +33,12 @@
 <button id="themeToggleBtn" class="theme-toggle">☀️ Modo Claro</button>
 
 <!-- TÍTULO CENTRALIZADO EXTERNO -->
-<div class="page-header">
+<header class="page-header">
     <a href="https://estoquetools.netlify.app/" title="Voltar à Página Inicial">
         <img src="img/favicon.png" alt="Logo Estoque" class="logo-img">
     </a>
     <h1>Conferência de Transações</h1>
-</div>
+</header>
 
 <div class="container">
     
@@ -61,7 +63,9 @@
                 <input type="file" id="txtFile" accept=".txt, .csv">
                 <button id="btnLimpar" class="btn-limpar" disabled>🗑️ Limpar Lista</button>
                 <button id="btnBaixarPDF" class="btn-pdf" disabled>📄 Baixar PDF</button>
+                <button id="btnBaixarExcel" class="btn-excel" disabled>📊 Baixar Excel</button>
             </div>
+            
             
             <textarea id="pasteArea" class="paste-area" placeholder="Dê Ctrl+C na tabela do sistema e Ctrl+V aqui..."></textarea>
             <button id="btnCarregarTexto" class="btn-carregar">📥 Carregar Texto Colado</button>
@@ -116,7 +120,7 @@
     <p>&copy; 2026 estoquetools. Todos os direitos reservados. Criado por Ronaldo Melo</p>
     <p class="footer-lembrete">
         Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail 
-        <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a>
+        <a href="mailto:ronnaldo.melo@gmail.com">ronnaldo.melo@gmail.com</a>
     </p>
 </div>
     
