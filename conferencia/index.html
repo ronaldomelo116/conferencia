@@ -264,9 +264,9 @@
 
     <button id="themeToggleBtn" class="theme-toggle">☀️ Modo Claro</button>
 
-    <div class="logo-container">
+    <header class="logo-container">
         <img src="img/logoestoquetools.png" alt="Logo EstoqueTools" class="logo-img">
-    </div>
+    </header>
 
     <div class="tools-grid">
         <a href="https://estoquetools.netlify.app/conferencia" class="tool-card">
@@ -310,14 +310,14 @@
         <p>&copy; 2026 estoquetools. Todos os direitos reservados. Criado por Ronaldo Melo</p>
         <p class="footer-lembrete">
         Atenção: qualquer problema com o sistema por favor entrar em contato através do e-mail 
-        <a href="mailto:ronaldo.melo@grupobrisanet.com.br">ronaldo.melo@grupobrisanet.com.br</a>
+        <a href="mailto:ronaldo.melo@gmail.com">ronnaldo.melo@gmail.com</a>
         </p>
     </div>
 
     <script>
         // Sincronização do tema Dark/Light integrada com as outras páginas
         const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
+        const savedTheme = localStorage.getItem('themeEstoque') || 'dark';
         
         document.documentElement.setAttribute('data-theme', savedTheme);
         atualizarBotaoTema(savedTheme);
@@ -327,7 +327,7 @@
             let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
             document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('themeBrisanet', newTheme);
+            localStorage.setItem('themeEstoque', newTheme);
             atualizarBotaoTema(newTheme);
         });
 
