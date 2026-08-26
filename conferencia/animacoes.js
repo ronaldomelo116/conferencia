@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =========================================================
        IDEIA 7: BOTÕES COM FÍSICA DE MOLA (SQUISH)
        ========================================================= */
-    const botoes = document.querySelectorAll('.btn-limpar, .btn-pdf, .btn-carregar, .theme-toggle');
+    const botoes = document.querySelectorAll('.btn-limpar, .btn-pdf,  .btn-excel, .btn-carregar, .theme-toggle');
     
     botoes.forEach(btn => {
         // Quando aperta o botão, ele afunda
