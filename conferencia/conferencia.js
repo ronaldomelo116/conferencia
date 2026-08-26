@@ -1,5 +1,5 @@
 const themeToggleBtn = document.getElementById('themeToggleBtn');
-const savedTheme = localStorage.getItem('themeBrisanet') || 'dark';
+const savedTheme = localStorage.getItem('themeEstoque') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 atualizarBotaoTema(savedTheme);
 
@@ -8,7 +8,7 @@ themeToggleBtn.addEventListener('click', () => {
     let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     
     document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('themeBrisanet', newTheme);
+    localStorage.setItem('themeEstoque', newTheme);
     atualizarBotaoTema(newTheme);
 });
 
@@ -23,6 +23,7 @@ function atualizarBotaoTema(theme) {
 const fileInput = document.getElementById('txtFile');
 const btnLimpar = document.getElementById('btnLimpar');
 const btnBaixarPDF = document.getElementById('btnBaixarPDF');
+const btnBaixarExcel = document.getElementById('btnBaixarExcel');
 const searchBar = document.getElementById('searchBar');
 const inputTransacao = document.getElementById('inputTransacao'); 
 const nsList = document.getElementById('nsList');
@@ -47,28 +48,29 @@ let currentSortColumn = -1;
 let currentSortDirection = 'asc';
 
 window.onload = function() {
-    const dadosSalvos = localStorage.getItem('dadosConferenciaBrisanet');
+    const dadosSalvos = localStorage.getItem('dadosConferencia');
     if (dadosSalvos) {
         estoqueDados = JSON.parse(dadosSalvos);
         if (estoqueDados.length > 0) {
             renderizarDaMemoria();
             btnLimpar.disabled = false;
             btnBaixarPDF.disabled = false;
+            btnBaixarExcel.disabled = false;
         }
     }
     
-    const transacaoSalva = localStorage.getItem('codigoTransacaoBrisanet');
+    const transacaoSalva = localStorage.getItem('codigoTransacao');
     if (transacaoSalva) {
         inputTransacao.value = transacaoSalva;
     }
 };
 
 function salvarNaMemoria() {
-    localStorage.setItem('dadosConferenciaBrisanet', JSON.stringify(estoqueDados));
+    localStorage.setItem('dadosConferencia', JSON.stringify(estoqueDados));
 }
 
 inputTransacao.addEventListener('input', function() {
-    localStorage.setItem('codigoTransacaoBrisanet', this.value.trim());
+    localStorage.setItem('codigoTransacao', this.value.trim());
 });
 
 btnLimpar.addEventListener('click', function() {
@@ -86,10 +88,11 @@ btnLimpar.addEventListener('click', function() {
     searchBar.value = '';
     searchBar.disabled = true;
     btnLimpar.disabled = true;
-    btnBaixarPDF.disabled = true; 
+    btnBaixarPDF.disabled = true;
+    btnBaixarExcel.disabled = true;
     
     inputTransacao.value = '';
-    localStorage.removeItem('codigoTransacaoBrisanet');
+    localStorage.removeItem('codigoTransacao');
     
     alertBox.style.display = 'none';
     alertWarning.style.display = 'none';
@@ -102,7 +105,7 @@ btnLimpar.addEventListener('click', function() {
     currentSortColumn = -1;
 
     estoqueDados = [];
-    localStorage.removeItem('dadosConferenciaBrisanet');
+    localStorage.removeItem('dadosConferencia');
     
     // Esconde o resumo flutuante ao limpar a lista
     document.getElementById('resumoFlutuante').style.display = 'none';
@@ -130,6 +133,7 @@ function processarConteudo(content) {
     renderizarDaMemoria(); 
     btnLimpar.disabled = false;
     btnBaixarPDF.disabled = false; 
+    btnBaixarExcel.disabled = false;
     
     pasteArea.value = '';
 }
@@ -583,3 +587,59 @@ function atualizarResumo() {
             limparBarraERestaurarLista();
         });
     }
+    
+    // =========================================================
+// FUNÇÃO PARA BAIXAR EM EXCEL (.XLSX)
+// =========================================================
+btnBaixarExcel.addEventListener('click', function() {
+    // 1. Prepara a primeira linha (Cabeçalho da Planilha)
+    const dadosPlanilha = [
+        ["Código", "Data", "Nome do Equipamento", "Nº Série", "Nº Série Interno", "Estado", "Qtd", "Funcionário", "Status"]
+    ];
+
+    // 2. Passa por todos os itens da lista e monta as linhas
+    estoqueDados.forEach(item => {
+        let limpo = item.linhaOriginal.replace(/"/g, ''); 
+        
+        let separador = '\t';
+        if (limpo.includes('\t')) separador = '\t';
+        else if (limpo.includes(';')) separador = ';';
+        else if (limpo.includes(',')) separador = ',';
+
+        let colunas = limpo.split(separador);
+        
+        // Limpa as tags HTML da data (<br>) e junta num espaço só
+        if (item.dataConferencia) {
+            colunas[1] = item.dataConferencia.replace(/<br>/g, ' ').replace(/<[^>]*>?/gm, '');
+        }
+        
+        let linha = [];
+        for(let i = 0; i < 8; i++) {
+            linha.push(colunas[i] ? colunas[i].trim() : '-');
+        }
+        
+        // Adiciona a coluna final de Status
+        linha.push(item.verificado ? 'OK' : 'Pendente');
+        
+        dadosPlanilha.push(linha);
+    });
+
+    // 3. Cria o arquivo Excel (Workbook e Worksheet)
+    const ws = XLSX.utils.aoa_to_sheet(dadosPlanilha);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Conferência");
+
+    // 4. Define o nome do arquivo dinamicamente
+    const codTransacao = inputTransacao.value.trim();
+    const hoje = new Date();
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const ano = hoje.getFullYear();
+    
+    let nomeArquivo = codTransacao 
+        ? `Transacao_${codTransacao}_${dia}-${mes}-${ano}.xlsx` 
+        : `Relatorio_Estoque_${dia}-${mes}-${ano}.xlsx`;
+
+    // 5. Baixa a planilha!
+    XLSX.writeFile(wb, nomeArquivo);
+});
